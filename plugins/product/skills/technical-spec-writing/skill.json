@@ -1,0 +1,10 @@
+{
+  "name": "technical-spec-writing",
+  "version": "1.0.0",
+  "title": "Technical Spec Writing",
+  "summary": "Write design docs reviewers can act on: measurable goals, non-goals, full contracts, failure handling, and a reversible rollout.",
+  "category": "product",
+  "tags": ["design-doc", "rfc", "spec", "architecture", "planning"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

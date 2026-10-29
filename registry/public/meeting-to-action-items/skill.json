@@ -1,0 +1,10 @@
+{
+  "name": "meeting-to-action-items",
+  "version": "1.0.0",
+  "title": "Meeting to Action Items",
+  "summary": "Turn transcripts or notes into decisions, single-owner dated action items, and open questions ready to share.",
+  "category": "product",
+  "tags": ["meetings", "action-items", "notes", "productivity", "summaries"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

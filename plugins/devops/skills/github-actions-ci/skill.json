@@ -1,0 +1,15 @@
+{
+  "name": "github-actions-ci",
+  "version": "1.0.0",
+  "title": "GitHub Actions CI",
+  "summary": "Fast, cached, least-privilege GitHub Actions workflows with pinned actions and no script-injection holes.",
+  "category": "devops",
+  "tags": [
+    "ci",
+    "github-actions",
+    "security",
+    "caching"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "support-escalation",
+  "version": "1.0.0",
+  "title": "Acme Support Escalation",
+  "summary": "Route Acme Cloud customer issues from support to engineering with the right tier, SLA and Linear ticket.",
+  "category": "support",
+  "tags": ["support", "escalation", "sla", "linear", "customers"],
+  "license": "Proprietary",
+  "author": "Acme Cloud",
+  "visibility": "private"
+}

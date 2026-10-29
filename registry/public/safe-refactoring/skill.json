@@ -1,0 +1,15 @@
+{
+  "name": "safe-refactoring",
+  "version": "1.0.0",
+  "title": "Safe Refactoring",
+  "summary": "Restructure code without changing behavior: pin it with tests, then move in small, verified, revertible steps.",
+  "category": "engineering",
+  "tags": [
+    "refactoring",
+    "code-quality",
+    "tests",
+    "maintainability"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

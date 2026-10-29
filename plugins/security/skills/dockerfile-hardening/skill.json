@@ -1,0 +1,15 @@
+{
+  "name": "dockerfile-hardening",
+  "version": "1.0.0",
+  "title": "Dockerfile Hardening",
+  "summary": "Harden container images: pinned bases, multi-stage builds, non-root users, no baked secrets, plus an auditor script.",
+  "category": "security",
+  "tags": [
+    "docker",
+    "containers",
+    "security",
+    "supply-chain"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

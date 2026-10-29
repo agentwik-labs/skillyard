@@ -1,0 +1,11 @@
+{
+  "name": "engineer-onboarding",
+  "version": "1.0.0",
+  "title": "Northwind Engineer Onboarding",
+  "summary": "Guide a new Northwind Pay engineer through access, environments, training and first change.",
+  "category": "people",
+  "tags": ["onboarding", "engineering", "access", "training"],
+  "license": "Proprietary",
+  "author": "Northwind Pay",
+  "visibility": "private"
+}

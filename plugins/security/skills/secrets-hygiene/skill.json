@@ -1,0 +1,10 @@
+{
+  "name": "secrets-hygiene",
+  "version": "1.0.0",
+  "title": "Secrets Hygiene",
+  "summary": "Scan a repo for leaked credentials, triage each hit, drive rotation, and add guardrails so keys stop landing in git.",
+  "category": "security",
+  "tags": ["secrets", "credentials", "scanning", "git", "rotation"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

@@ -1,0 +1,15 @@
+{
+  "name": "pr-description",
+  "version": "1.0.0",
+  "title": "PR Description",
+  "summary": "Write pull request titles and bodies covering why, approach, risk and verified testing so reviews go fast.",
+  "category": "docs",
+  "tags": [
+    "pull-requests",
+    "git",
+    "code-review",
+    "writing"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

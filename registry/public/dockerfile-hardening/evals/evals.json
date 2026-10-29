@@ -1,0 +1,44 @@
+{
+  "cases": [
+    {
+      "name": "review-dockerfile",
+      "files": {
+        "Dockerfile": "FROM node:latest\nWORKDIR /app\nCOPY . .\nRUN npm install\nENV STRIPE_SECRET_KEY=sk_live_placeholder\nRUN curl -fsSL https://example.com/setup.sh | sh\nEXPOSE 3000\nCMD npm start\n"
+      },
+      "prompt": "Review the Dockerfile in this folder for security and reproducibility and give me a fixed version. Answer directly.",
+      "checks": [
+        {
+          "type": "regex",
+          "value": "^\\s*USER\\s+(?!root)\\S+",
+          "flags": "im",
+          "label": "runs as a non-root user"
+        },
+        {
+          "type": "regex",
+          "value": "HEALTHCHECK",
+          "label": "adds a HEALTHCHECK"
+        },
+        {
+          "type": "regex",
+          "value": "npm ci",
+          "label": "uses npm ci"
+        },
+        {
+          "type": "regex",
+          "value": "\\.dockerignore",
+          "label": "mentions .dockerignore"
+        },
+        {
+          "type": "regex",
+          "value": "@sha256:|digest",
+          "label": "pins the base image by digest"
+        },
+        {
+          "type": "regex",
+          "value": "CMD\\s*\\[",
+          "label": "exec-form CMD"
+        }
+      ]
+    }
+  ]
+}

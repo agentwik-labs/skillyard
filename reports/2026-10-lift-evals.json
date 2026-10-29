@@ -1,0 +1,542 @@
+[
+  {
+    "skill": "deploy-runbook",
+    "agent": "claude",
+    "model": "haiku",
+    "runs": 2,
+    "cases": [
+      {
+        "case": "ship-to-prod",
+        "condition": "without",
+        "run": 0,
+        "score": 0.2,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": false
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": false
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": true
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": false
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": false
+          }
+        ],
+        "seconds": 19,
+        "exit": 0,
+        "output": "I couldn't find Acme Cloud's deploy runbook or a local `billing-api` checkout, so I can't give you your team's exact production commands. The working directory is empty, and a search of your home directory turned up no `billing-api` repo or deploy config. Below is what I can verify and the generic flow to confirm against your pipeline.\n\n**1. Confirm the commit is on the release branch (run in the billing-api repo)**\n\n```bash\ncd /path/to/billing-api\ngit fetch origin\ngit cat-file -t a3f9c21                    # should print \"commit\"\ngit show --stat a3f9c21                    # what the commit changes\ngit branch -r --contains a3f9c21           # which remote branches include it\n```\n\nIf `git cat-file` fails, the commit isn't in your clone. Fetch again or check the SHA.\n\n**2. Check that it's green**\n\n```bash\ngh run list --commit a3f9c21 --limit 5     # CI runs for this exact commit\ngh run view <run-id> --log-failed         # only if something failed\n```\n\nDon't promote a commit with failing or missing CI.\n\n**3. Deploy (depends on Acme's pipeline, so confirm before running)**\n\nA common pattern is to tag the commit and push the tag, which triggers the production workflow:\n\n```bash\ngit tag -a release/prod-$(date +%Y%m%d)-a3f9c21 a3f9c21 -m \"Prod release a3f9c21\"\ngit push origin release/prod-$(date +%Y%m%d)-a3f9c21\n```\n\nOther teams instead merge to a `release` or `prod` branch, or click \"run\" on a manually triggered workflow (`gh workflow run <name> -f ref=a3f9c21`). Check which one billing-api uses. Pushing a tag or triggering a production workflow is outward-facing, so make sure the approval gate and change-freeze rules are satisfied first.\n\n**4. Verify the rollout**\n\n```bash\ngh run watch                               # follow the deploy workflow\n```\n\nThen check the service's health endpoint and dashboards, and confirm the running version matches a3f9c21.\n\n**Rollback** if it goes wrong: redeploy the previous release tag, or re-run the prior successful production workflow.\n\nTo get exact commands, tell me where billing-api lives or paste the deploy section of its README or runbook, and I'll replace the generic steps above with your actual ones.\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "without",
+        "run": 1,
+        "score": 0,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": false
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": false
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": false
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": false
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": false
+          }
+        ],
+        "seconds": 17,
+        "exit": 0,
+        "output": "I couldn't find Acme's billing-api deploy runbook or repo on this machine. The working directory is empty and isn't a git repo, and I have no notes on Acme's pipeline. So the steps below are the standard flow with placeholders. Swap in your team's real deploy tool and names before running anything.\n\n**1. Get the repo at the exact commit**\n```bash\ngit clone git@github.com:<acme-org>/billing-api.git\ncd billing-api\ngit fetch origin --tags\ngit cat-file -t a3f9c21          # should print \"commit\"\ngit show --stat a3f9c21          # confirm it's the change you expect\ngit branch -r --contains a3f9c21 # confirm it's on main (or your release branch)\n```\n\n**2. Confirm CI passed on that commit**\n```bash\ngh api repos/<acme-org>/billing-api/commits/a3f9c21/check-runs \\\n  --jq '.check_runs[] | \"\\(.name): \\(.conclusion)\"'\n```\nEvery required check should show `success`. Don't deploy otherwise.\n\n**3. Tag the commit (only if your pipeline deploys from tags)**\n```bash\ngit tag -a v<X.Y.Z> a3f9c21 -m \"billing-api v<X.Y.Z>\"\ngit push origin v<X.Y.Z>\n```\n\n**4. Deploy**\nUse whatever your pipeline uses. For example, if it's a GitHub Actions workflow:\n```bash\ngh workflow run deploy-production.yml \\\n  --repo <acme-org>/billing-api \\\n  -f ref=a3f9c21\ngh run watch --repo <acme-org>/billing-api   # follow until it finishes\n```\nIf Acme uses a different tool, such as an internal CLI, Argo, or Spinnaker, the command replaces this step.\n\n**5. Verify**\n```bash\ncurl -fsS https://<billing-api-prod-host>/health\ncurl -fsS https://<billing-api-prod-host>/version   # should report a3f9c21 or v<X.Y.Z>\n```\nThen watch error rates and logs for about 15 minutes.\n\n**6. Roll back if needed**\nRe-run the same deploy with the previous known-good SHA, for example `-f ref=<previous-sha>`. If you use a rollback command, put it here instead.\n\nIf you point me at the billing-api repo path or the Acme deploy runbook, I'll replace the placeholders with the exact commands and workflow names.\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "with",
+        "run": 0,
+        "score": 1,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": true
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": true
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": true
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": true
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": true
+          }
+        ],
+        "seconds": 14,
+        "exit": 0,
+        "output": "Today (2026-10-29) is a Thursday, so you have to finish inside the Mon–Thu 09:00–16:00 US Eastern window. Start the prod promotion early enough that the canary wait and full rollout finish before 16:00 ET. I haven't run anything. Promoting to prod is outward-facing, so these are the steps for you to run, or tell me to run them.\n\n## Steps for billing-api @ a3f9c21\n\n**1. Confirm CI is green on the commit**\n```sh\nacme ci status billing-api --sha a3f9c21\n```\n\n**2. Confirm the commit is healthy on dev (at least 15 minutes)**\n```sh\nacme deploy status billing-api --env dev\n```\n\n**3. Promote to staging**\n```sh\nacme deploy promote billing-api --env staging --sha a3f9c21\n```\n\n**4. Run the smoke suite on staging (must pass)**\n```sh\nacme smoke run billing-api --env staging\n```\n\n**5. Check for a deploy freeze**\n```sh\nacme deploy freeze status\n```\nIf a freeze is active, stop. An exception needs VP Eng approval in #deploy-exceptions.\n\n**6. Post in #deploys** with the service (billing-api), the sha (a3f9c21), the Linear ticket, and \"promoting to prod\".\n\n**7. Promote to prod**\n```sh\nacme deploy promote billing-api --env prod --sha a3f9c21\n```\nThe CLI rolls out us-east-1 as a 10% canary, waits 20 minutes, then continues to full rollout and eu-west-1. Only one prod promotion per service runs at a time. Don't use `--force-unlock` unless the lock holder confirms in #deploys.\n\n**8. Watch the canary**\n```sh\nacme dash canary billing-api\n```\nRoll back immediately, without discussion, if any of these happen during canary or within 60 minutes of full rollout:\n- 5xx rate above 1% for 5 minutes\n- p95 latency more than 30% above the 7-day baseline\n- any SEV1 or SEV2 alert on billing-api\n\nRollback:\n```sh\nacme deploy rollback billing-api --env prod\n```\nThis redeploys the previous image. It does not revert database migrations.\n\n**9. Reply \"done\" in the #deploys thread** with the final rollout time.\n\n## Before you start\n\n- I couldn't check a3f9c21 locally. This directory isn't a git repo, so confirm the sha is on main first.\n- Check whether the commit includes a database migration. Migrations must ship as a separate, earlier, backward-compatible deploy. If this commit includes one, stop and split it out.\n- If the change is risky, gate it behind a LaunchDarkly flag (project `acme-app`) defaulted to off in prod.\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "with",
+        "run": 1,
+        "score": 1,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": true
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": true
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": true
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": true
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": true
+          }
+        ],
+        "seconds": 11,
+        "exit": 0,
+        "output": "I haven't run anything. Prod promotion is outward-facing, so these are the steps for you to run, in order. They come from the Acme Cloud deploy runbook.\n\nToday is Thursday, 2026-10-29. Prod deploys are allowed Monday to Thursday, 09:00 to 16:00 US Eastern, so check the time before step 7.\n\n**1. Confirm CI is green for the commit**\n```sh\nacme ci status billing-api --sha a3f9c21\n```\n\n**2. Confirm the commit is on dev and healthy for at least 15 minutes**\n```sh\nacme deploy status billing-api --env dev\n```\n\n**3. Promote to staging**\n```sh\nacme deploy promote billing-api --env staging --sha a3f9c21\n```\n\n**4. Run the smoke suite on staging. It must pass.**\n```sh\nacme smoke run billing-api --env staging\n```\n\n**5. Check for a deploy freeze.** If one is active, stop. Exceptions need VP Eng approval in #deploy-exceptions.\n```sh\nacme deploy freeze status\n```\n\n**6. Post in #deploys** with the service (billing-api), the sha (a3f9c21), the Linear ticket, and \"promoting to prod\".\n\n**7. Promote to prod**\n```sh\nacme deploy promote billing-api --env prod --sha a3f9c21\n```\nThe CLI rolls out us-east-1 as a 10% canary, waits 20 minutes, then rolls out full and EU (eks-prod-euw1). Only one prod promotion per service runs at a time. Don't use `--force-unlock` unless the lock holder confirms in #deploys.\n\n**8. Watch the canary**\n```sh\nacme dash canary billing-api\n```\nRoll back immediately if, during the canary or in the 60 minutes after full rollout:\n- 5xx rate is above 1% for 5 minutes,\n- p95 latency is more than 30% above the 7-day baseline,\n- any SEV1 or SEV2 alert fires on the service.\n\nRollback:\n```sh\nacme deploy rollback billing-api --env prod\n```\nThis redeploys the previous image but does not revert database migrations.\n\n**9. Reply \"done\" with the final rollout time in the #deploys thread.**\n\nTwo rules to keep in mind:\n- If this release includes a database migration, it must already have shipped in its own earlier deploy and be backward compatible for one release. Rollback won't undo schema changes.\n- Risky behavior should go behind a LaunchDarkly flag (project `acme-app`), off in prod by default.\n\nI haven't confirmed that the `acme` CLI is installed on this machine, and I don't have live access to the cluster or dashboards, so the output of each command is what you'll need to check.\n"
+      }
+    ],
+    "baseline": 0.1,
+    "withSkill": 1,
+    "lift": 0.9
+  },
+  {
+    "skill": "database-migrations",
+    "agent": "claude",
+    "model": "haiku",
+    "runs": 2,
+    "cases": [
+      {
+        "case": "rename-column",
+        "condition": "without",
+        "run": 0,
+        "score": 1,
+        "checks": [
+          {
+            "label": "adds the new column first",
+            "pass": true
+          },
+          {
+            "label": "backfills",
+            "pass": true
+          },
+          {
+            "label": "backfills in batches",
+            "pass": true
+          },
+          {
+            "label": "sets a lock timeout",
+            "pass": true
+          },
+          {
+            "label": "drops the old column in a later step",
+            "pass": true
+          }
+        ],
+        "seconds": 28,
+        "exit": 0,
+        "output": "The project directory is empty, so I couldn't check your ORM, migration tool, or Postgres version. The plan below assumes Postgres 12+, `users.name` is `text` and `NOT NULL`, and your migration tool can run non-transactional statements (needed for `CREATE INDEX CONCURRENTLY`). Adjust the types and names to match your schema.\n\n## Why not a direct rename\n\n`ALTER TABLE users RENAME COLUMN name TO full_name` is fast, but during a rolling deploy old app instances still query `name`, and they start failing the moment it runs. So the rename becomes an expand/contract change across several deploys.\n\n## Migration plan\n\n| Step | When | What | Breaks old code? |\n|---|---|---|---|\n| 1. Expand schema | Migration 1, before deploy | Add `full_name`, sync trigger, index if needed | No |\n| 2. Dual-write deploy | Deploy A | App writes both columns, reads `full_name` with `name` fallback | No |\n| 3. Backfill | After deploy A, in batches | Copy `name` → `full_name` for existing rows | No |\n| 4. Enforce NOT NULL | Migration 2, after backfill | Add `NOT VALID` check, then validate | No |\n| 5. Read-only-new deploy | Deploy B | App reads and writes only `full_name` | No |\n| 6. Contract | Migration 3, after deploy B has fully rolled out | Drop trigger, function, old index, `name` column | Yes, so only after no instance uses `name` |\n\nEach deploy must be fully rolled out before the next step starts. Step 6 is the only irreversible step.\n\n## SQL\n\n**Migration 1: expand**\n\n```sql\nSET lock_timeout = '3s';  -- fail fast rather than queue behind long transactions\n\nALTER TABLE users ADD COLUMN full_name text;  -- no default, so metadata-only\n\nCREATE OR REPLACE FUNCTION users_sync_name_columns()\nRETURNS trigger\nLANGUAGE plpgsql AS $$\nBEGIN\n  IF TG_OP = 'INSERT' THEN\n    NEW.full_name := COALESCE(NEW.full_name, NEW.name);\n    NEW.name      := COALESCE(NEW.name, NEW.full_name);\n  ELSIF NEW.full_name IS DISTINCT FROM OLD.full_name THEN\n    NEW.name := NEW.full_name;          -- new code wrote full_name\n  ELSIF NEW.name IS DISTINCT FROM OLD.name THEN\n    NEW.full_name := NEW.name;          -- old code wrote name\n  END IF;\n  RETURN NEW;\nEND $$;\n\nCREATE TRIGGER users_sync_name_columns_trg\n  BEFORE INSERT OR UPDATE ON users\n  FOR EACH ROW EXECUTE FUNCTION users_sync_name_columns();\n\n-- Only if name is indexed or queried by value.\n-- Must run outside a transaction.\nCREATE INDEX CONCURRENTLY IF NOT EXISTS users_full_name_idx ON users (full_name);\n```\n\n**Deploy A:** the app writes both `name` and `full_name`. Reads use `COALESCE(full_name, name)`. Old instances still work because the trigger keeps the columns in sync.\n\n**Backfill: run as a script, not a migration.** Repeat until it updates 0 rows:\n\n```sql\nUPDATE users\nSET full_name = name\nWHERE id IN (\n  SELECT id FROM users\n  WHERE full_name IS NULL AND name IS NOT NULL\n  ORDER BY id\n  LIMIT 5000\n);\n```\n\nPause briefly between batches to limit load and replication lag. The trigger keeps rows that are written during the backfill consistent. Check progress with:\n\n```sql\nSELECT count(*) FROM users WHERE full_name IS NULL AND name IS NOT NULL;\n```\n\n**Migration 2: enforce NOT NULL without a long lock**\n\n```sql\nSET lock_timeout = '3s';\n\nALTER TABLE users\n  ADD CONSTRAINT users_full_name_not_null CHECK (full_name IS NOT NULL) NOT VALID;\n\n-- Scans the table but takes only a SHARE UPDATE EXCLUSIVE lock, so reads and writes continue.\nALTER TABLE users VALIDATE CONSTRAINT users_full_name_not_null;\n```\n\n**Deploy B:** the app reads and writes only `full_name`. Old instances are gone once this deploy finishes, and nothing references `name` any more.\n\n**Migration 3: contract**\n\n```sql\nSET lock_timeout = '3s';\n\n-- Valid CHECK constraint lets Postgres 12+ skip the full-table scan here.\nALTER TABLE users ALTER COLUMN full_name SET NOT NULL;\nALTER TABLE users DROP CONSTRAINT users_full_name_not_null;\n\nDROP TRIGGER IF EXISTS users_sync_name_columns_trg ON users;\nDROP FUNCTION IF EXISTS users_sync_name_columns();\n\nDROP INDEX CONCURRENTLY IF"
+      },
+      {
+        "case": "rename-column",
+        "condition": "without",
+        "run": 1,
+        "score": 1,
+        "checks": [
+          {
+            "label": "adds the new column first",
+            "pass": true
+          },
+          {
+            "label": "backfills",
+            "pass": true
+          },
+          {
+            "label": "backfills in batches",
+            "pass": true
+          },
+          {
+            "label": "sets a lock timeout",
+            "pass": true
+          },
+          {
+            "label": "drops the old column in a later step",
+            "pass": true
+          }
+        ],
+        "seconds": 35,
+        "exit": 0,
+        "output": "# Renaming `users.name` to `users.full_name` without downtime\n\nA direct `ALTER TABLE users RENAME COLUMN name TO full_name` is instant, but it breaks every running instance still on the old code, which is the problem during a rolling deploy. The fix is expand/contract: add the new column, keep both columns in sync while old and new code run side by side, then drop the old column once nothing reads it.\n\nAssumptions: Postgres 12+, `name` is `text` (use the same type if not), and I haven't seen your codebase, so check the items in the last section.\n\n## Phases\n\n| Step | Action | App version reading `name` | App version reading `full_name` |\n|---|---|---|---|\n| 1 | Migration M1 (expand): add column, sync trigger | v1 | n/a |\n| 2 | Batched backfill script | v1 | n/a |\n| 3 | Deploy v2: read `COALESCE(full_name, name)`, write `full_name` | still running | yes |\n| 4 | Migration M2: index, NOT NULL (if needed), verify | none | yes |\n| 5 | Deploy v3: read and write `full_name` only | none | yes |\n| 6 | Migration M3 (contract): drop trigger, drop `name` | none | yes |\n\nRollback is safe until step 6, because `name` stays authoritative and the trigger keeps it current. After step 6, rolling back to v1 would require re-adding the column.\n\n## Migration M1: expand\n\n```sql\n-- Metadata-only: nullable, no default, so no table rewrite\nSET lock_timeout = '3s';\nALTER TABLE users ADD COLUMN full_name text;\n\nCREATE OR REPLACE FUNCTION users_sync_name_full_name() RETURNS trigger\nLANGUAGE plpgsql AS $$\nBEGIN\n  IF TG_OP = 'INSERT' THEN\n    NEW.full_name := COALESCE(NEW.full_name, NEW.name);\n    NEW.name      := COALESCE(NEW.name, NEW.full_name);\n  ELSIF NEW.full_name IS DISTINCT FROM OLD.full_name THEN\n    NEW.name := NEW.full_name;          -- write through new code wins\n  ELSIF NEW.name IS DISTINCT FROM OLD.name THEN\n    NEW.full_name := NEW.name;          -- write through old code wins\n  END IF;\n  RETURN NEW;\nEND $$;\n\nCREATE TRIGGER users_sync_name_full_name\n  BEFORE INSERT OR UPDATE ON users\n  FOR EACH ROW EXECUTE FUNCTION users_sync_name_full_name();\n```\n\nOld code's inserts and updates to `name` flow into `full_name`, and new code's writes flow back into `name`.\n\n## Backfill\n\nRun this as a standalone script with `psql`, not inside your migration tool's transaction, because the loop commits per batch. Each batch is short and keeps locks brief.\n\n```sql\n-- backfill_users_full_name.sql\nDO $$\nDECLARE\n  n int;\nBEGIN\n  LOOP\n    WITH batch AS (\n      SELECT id\n      FROM users\n      WHERE full_name IS NULL AND name IS NOT NULL   -- NULL names are excluded so the loop terminates\n      ORDER BY id\n      LIMIT 5000\n      FOR UPDATE SKIP LOCKED\n    )\n    UPDATE users u\n    SET full_name = u.name            -- row's own value, so a concurrent name write isn't clobbered\n    FROM batch\n    WHERE u.id = batch.id;\n\n    GET DIAGNOSTICS n = ROW_COUNT;\n    EXIT WHEN n = 0;\n    COMMIT;\n    PERFORM pg_sleep(0.05);           -- throttle to protect replication lag and I/O\n  END LOOP;\nEND $$;\n```\n\nVerify before moving on:\n\n```sql\nSELECT count(*) FROM users WHERE full_name IS DISTINCT FROM name;  -- expect 0\nSELECT count(*) FROM users WHERE full_name IS NULL AND name IS NOT NULL;  -- expect 0\n```\n\n## Deploy v2\n\n- Reads: `COALESCE(full_name, name)`, which covers rows the backfill hasn't reached yet.\n- Writes: `full_name`. The trigger mirrors the value into `name`, so v1 instances still see correct data.\n\n## Migration M2: indexes and constraints\n\nRun after v2 is fully deployed and the backfill is verified.\n\n```sql\n-- Only if `name` was indexed. Must run outside a transaction.\nCREATE INDEX CONCURRENTLY users_full_name_idx ON users (full_name);\n\n-- Only if `name` was NOT NULL. Avoids a full-table scan under an exclusive lock.\nALTER TABLE users ADD CONSTRAINT users_full_name_not_null\n  CHECK (full_name IS NOT NULL) NOT VALID;\nALTER TABLE users VALIDATE CONSTRAINT users_full_name_not_null;\nALTER TABLE users ALTER COLUMN full_name SET NOT NULL;   -- fast: a validated check exists ("
+      },
+      {
+        "case": "rename-column",
+        "condition": "with",
+        "run": 0,
+        "score": 1,
+        "checks": [
+          {
+            "label": "adds the new column first",
+            "pass": true
+          },
+          {
+            "label": "backfills",
+            "pass": true
+          },
+          {
+            "label": "backfills in batches",
+            "pass": true
+          },
+          {
+            "label": "sets a lock timeout",
+            "pass": true
+          },
+          {
+            "label": "drops the old column in a later step",
+            "pass": true
+          }
+        ],
+        "seconds": 70,
+        "exit": 0,
+        "output": "The project directory only contains the `database-migrations` skill, not your app code, so I couldn't see your ORM, migration tool, or the `users.name` call sites. The plan below uses raw Postgres SQL and assumes `name` is nullable. I wrote the files to the scratchpad:\n\n- `/private/tmp/claude-501/-private-var-folders-8k--tk48sxd2vs-b7dml4vh-5jh0000gn-T-skillyard-eval-database-migrations-jF7rCb/68e1f9e8-1430-471b-b0f4-9915a41bd29a/scratchpad/migrations/0001_expand_users_full_name.sql`\n- `/private/tmp/claude-501/-private-var-folders-8k--tk48sxd2vs-b7dml4vh-5jh0000gn-T-skillyard-eval-database-migrations-jF7rCb/68e1f9e8-1430-471b-b0f4-9915a41bd29a/scratchpad/migrations/0002_contract_users_drop_name.sql`\n- `/private/tmp/claude-501/-private-var-folders-8k--tk48sxd2vs-b7dml4vh-5jh0000gn-T-skillyard-eval-database-migrations-jF7rCb/68e1f9e8-1430-471b-b0f4-9915a41bd29a/scratchpad/scripts/backfill_users_full_name.py`\n\n## Deploy plan\n\nEach step is deployed and verified before the next one starts.\n\n| # | Step | Type | Rollback |\n|---|---|---|---|\n| 1 | Add nullable `users.full_name` (migration 0001) | Schema | `DROP COLUMN full_name`, no data loss |\n| 2 | Ship code that writes **both** `name` and `full_name` on every insert and update. Reads still use `name`. | Code deploy | Roll back to step 1 code |\n| 3 | Wait for rollout to finish, so no pod is still writing only `name`. Run the backfill job. Confirm the verification counts are zero. | Background job | Idempotent, safe to re-run |\n| 4 | Ship code that reads `full_name`. Writes still go to both. | Code deploy | Roll back to step 2 code. Both columns are still valid. |\n| 5 | Ship code that stops touching `name` entirely. | Code deploy | Roll back to step 4 code. `name` is stale from here on, so don't roll back past step 4 once step 5 has run. |\n| 6 | Wait at least one full release cycle. Take a backup. Confirm no query references `name`. Drop it (migration 0002). | Schema | Restore from backup only |\n\nSteps 2 and 4 are where a rolling deploy can break you, so don't skip the waits between them.\n\n## Migration 0001 (expand)\n\n```sql\nSET lock_timeout = '5s';\n\nALTER TABLE users ADD COLUMN full_name text;\n```\n\n## Migration 0002 (contract, step 6 only)\n\n```sql\nSET lock_timeout = '5s';\n\nALTER TABLE users DROP COLUMN name;\n```\n\n## Backfill\n\n`scripts/backfill_users_full_name.py` runs keyset batches of 5,000 rows. Each batch is its own short transaction, with a 100 ms pause between batches and `lock_timeout` set to 5s. It only touches rows where `full_name IS NULL`, so it can be re-run after a crash. It prints the remaining NULL count and mismatch count when it finishes, and exits non-zero if either is not zero.\n\nRun it with `DATABASE_URL=... python3 backfill_users_full_name.py`.\n\n## Lint result\n\n- `0001`: 0 errors, 0 warnings.\n- `0002`: 0 errors, 1 warning. The warning is the expected \"dropping a column destroys data\" note. Confirm the backup and read-check before running it.\n- The backfill script compiles.\n\n## Lock impact\n\n- `ADD COLUMN full_name text` (nullable, no default): metadata only, brief ACCESS EXCLUSIVE lock, no rewrite.\n- Backfill `UPDATE`s: row-level locks only, no table lock.\n- `DROP COLUMN name`: metadata only, brief ACCESS EXCLUSIVE lock. The table isn't rewritten, but the space isn't reclaimed until a later rewrite.\n- If `name` has an index, drop it with `DROP INDEX CONCURRENTLY` in its own non-transactional migration before 0002. Otherwise `DROP COLUMN` takes the index down under the lock.\n\n## Things to check before you start\n\n- **Every writer.** Grep for `name` on `users` across the app, cron jobs, admin scripts, and any other service that writes to the table. Code you don't deploy with the app won't dual-write, so `full_name` goes stale. If any such writer exists, add a `BEFORE INSERT OR UPDATE` sync trigger for the transition period, and drop it in step 6.\n- **Nullability.** If `name` is `NOT NULL`, don't add that constraint to `full_name` in one step. Use `ADD CONSTRAINT ... CH"
+      },
+      {
+        "case": "rename-column",
+        "condition": "with",
+        "run": 1,
+        "score": 1,
+        "checks": [
+          {
+            "label": "adds the new column first",
+            "pass": true
+          },
+          {
+            "label": "backfills",
+            "pass": true
+          },
+          {
+            "label": "backfills in batches",
+            "pass": true
+          },
+          {
+            "label": "sets a lock timeout",
+            "pass": true
+          },
+          {
+            "label": "drops the old column in a later step",
+            "pass": true
+          }
+        ],
+        "seconds": 46,
+        "exit": 0,
+        "output": "I wrote the migration files and backfill script to `/private/tmp/claude-501/-private-var-folders-8k--tk48sxd2vs-b7dml4vh-5jh0000gn-T-skillyard-eval-database-migrations-r4dOXi/646cdc43-9c69-439a-b9ee-4b7e5b285553/scratchpad/rename_users_name/`. This directory has no migration framework, so they are raw Postgres SQL. Wrap each in your tool's up/down format.\n\nA plain `ALTER TABLE users RENAME COLUMN name TO full_name` is fast, but it breaks any pod still running code that reads or writes `name`. So this is expand/contract over several deploys.\n\n## Deploy plan\n\n| # | Step | Type | Rollback |\n|---|---|---|---|\n| 1 | `01_expand_add_full_name.sql` | Schema migration | Drop `full_name` |\n| 2 | `02_sync_trigger.sql` | Schema migration | Drop trigger and function |\n| 3 | Release A: app writes both `name` and `full_name`, reads `name` | Code deploy | Redeploy previous |\n| 4 | `backfill_full_name.py` (batched, resumable) | Background job | Nothing to undo; `full_name` is re-derivable |\n| 5 | `03_…not_null.sql`, then `03b_…validate…sql` (only if `name` is NOT NULL) | Schema migration | Drop constraint or column |\n| 6 | Release B: app reads `full_name` | Code deploy | Redeploy Release A, which still reads `name` (kept in sync by the trigger) |\n| 7 | Release C: app stops writing `name` | Code deploy | Redeploy Release B; trigger keeps `name` current |\n| 8 | Wait one full release cycle. Confirm no deployed code references `name` (grep the repo, check query logs or `pg_stat_statements`). | Verification | n/a |\n| 9 | `04_contract_drop_sync_trigger.sql` | Schema migration | Recreate trigger from `02` |\n| 10 | `05_contract_drop_name.sql` | Schema migration, **irreversible** | Restore `name` from the backup taken before step 1 |\n\nThe trigger is what makes this safe under rolling deploys. Old pods keep writing only `name` during steps 3–6, and new pods may write only `full_name` after step 6. The trigger keeps the two columns equal in both directions, so neither version reads stale data.\n\n## SQL\n\n**`01_expand_add_full_name.sql`**\n```sql\nSET lock_timeout = '5s';\nALTER TABLE users ADD COLUMN full_name text;\n```\n\n**`02_sync_trigger.sql`**\n```sql\nSET lock_timeout = '5s';\nCREATE OR REPLACE FUNCTION users_sync_name_full_name() RETURNS trigger\nLANGUAGE plpgsql AS $$\nBEGIN\n  IF TG_OP = 'INSERT' THEN\n    NEW.full_name := COALESCE(NEW.full_name, NEW.name);\n    NEW.name      := COALESCE(NEW.name, NEW.full_name);\n  ELSIF NEW.name IS DISTINCT FROM OLD.name AND NEW.full_name IS NOT DISTINCT FROM OLD.full_name THEN\n    NEW.full_name := NEW.name;\n  ELSIF NEW.full_name IS DISTINCT FROM OLD.full_name AND NEW.name IS NOT DISTINCT FROM OLD.name THEN\n    NEW.name := NEW.full_name;\n  END IF;\n  RETURN NEW;\nEND;\n$$;\nCREATE TRIGGER users_sync_name_full_name\n  BEFORE INSERT OR UPDATE OF name, full_name ON users\n  FOR EACH ROW EXECUTE FUNCTION users_sync_name_full_name();\n```\n\n**`03_constraint_full_name_not_null.sql`** (only if `name` is NOT NULL; run after the backfill reports zero nulls)\n```sql\nSET lock_timeout = '5s';\nALTER TABLE users ADD CONSTRAINT users_full_name_not_null\n  CHECK (full_name IS NOT NULL) NOT VALID;\n```\n\n**`03b_validate_full_name_not_null.sql`**\n```sql\nSET lock_timeout = '5s';\nALTER TABLE users VALIDATE CONSTRAINT users_full_name_not_null;\nALTER TABLE users ALTER COLUMN full_name SET NOT NULL;  -- no scan, thanks to the validated CHECK\nALTER TABLE users DROP CONSTRAINT users_full_name_not_null;\n```\n\n**`04_contract_drop_sync_trigger.sql`**\n```sql\nSET lock_timeout = '5s';\nDROP TRIGGER IF EXISTS users_sync_name_full_name ON users;\nDROP FUNCTION IF EXISTS users_sync_name_full_name();\n```\n\n**`05_contract_drop_name.sql`**\n```sql\nSET lock_timeout = '5s';\nALTER TABLE users DROP COLUMN name;\n```\n\n**Backfill:** `backfill_full_name.py` walks `id` ranges in batches of 5,000 (configurable). Each batch is its own autocommit statement, with a pause between batches. It only touches rows where `full_name IS NULL`, so it can be re-run after an interruption. It exits non-z"
+      }
+    ],
+    "baseline": 1,
+    "withSkill": 1,
+    "lift": 0
+  },
+  {
+    "skill": "dockerfile-hardening",
+    "agent": "claude",
+    "model": "haiku",
+    "runs": 2,
+    "cases": [
+      {
+        "case": "review-dockerfile",
+        "condition": "without",
+        "run": 0,
+        "score": 0.8333333333333334,
+        "checks": [
+          {
+            "label": "runs as a non-root user",
+            "pass": true
+          },
+          {
+            "label": "adds a HEALTHCHECK",
+            "pass": false
+          },
+          {
+            "label": "uses npm ci",
+            "pass": true
+          },
+          {
+            "label": "mentions .dockerignore",
+            "pass": true
+          },
+          {
+            "label": "pins the base image by digest",
+            "pass": true
+          },
+          {
+            "label": "exec-form CMD",
+            "pass": true
+          }
+        ],
+        "seconds": 21,
+        "exit": 0,
+        "output": "The Dockerfile has five real problems: an unpinned base image, a live-looking Stripe key baked into the image, a remote script piped into `sh` as root, root at runtime, and a `COPY . .` that runs before the dependency install and pulls in everything (including any `.env`).\n\n**Fixed `Dockerfile`:**\n\n```dockerfile\n# syntax=docker/dockerfile:1\n# Pin to an exact version. For full reproducibility, also pin the digest:\n#   FROM node:22.12.0-bookworm-slim@sha256:<digest>\nFROM node:22.12.0-bookworm-slim\n\nENV NODE_ENV=production\nWORKDIR /app\n\n# Copy manifests first so the install layer is cached until dependencies change\nCOPY package.json package-lock.json ./\nRUN npm ci --omit=dev && npm cache clean --force\n\n# Copy app source owned by the unprivileged node user\nCOPY --chown=node:node . .\n\n# Don't run as root\nUSER node\n\nEXPOSE 3000\n\n# Exec form so the process receives signals (SIGTERM) directly\nCMD [\"npm\", \"start\"]\n```\n\n**Also add a `.dockerignore`** so the `COPY` can't leak secrets or junk:\n\n```\nnode_modules\nnpm-debug.log\n.git\n.env\n.env.*\nDockerfile\n.dockerignore\n```\n\n**What changed and why:**\n\n- **`node:latest` → pinned tag.** `latest` changes under you, so builds aren't reproducible. Pin the exact version, and optionally the digest.\n- **`npm install` → `npm ci`.** `ci` installs exactly what's in the lockfile and fails if `package.json` and the lockfile disagree. `--omit=dev` keeps dev dependencies out of the image. If your build needs devDependencies (e.g. a TypeScript compile step), do the build in a separate stage and drop the flag there.\n- **Layer ordering.** Copying the manifests before the source means editing app code no longer re-runs `npm ci`.\n- **Removed `ENV STRIPE_SECRET_KEY=...`.** An `ENV` value is stored in the image config and visible to anyone who can pull the image. Inject the key at runtime instead: `docker run -e STRIPE_SECRET_KEY ...`, or use Docker/Compose secrets or your orchestrator's secret store. The value `sk_live_placeholder` looks like a live-key prefix, so if a real key was ever committed or pushed in an image, rotate it.\n- **Removed `curl https://example.com/setup.sh | sh`.** It executes unverified remote code as root at build time, and `example.com` is a placeholder. If you need something from that script, install it explicitly: pin the version, download it, verify a SHA-256 checksum, then run it. Tell me what `setup.sh` is meant to do and I'll write that step.\n- **`USER node`.** The official Node images ship an unprivileged `node` user. Running as root gives an attacker in the container more to work with.\n- **`CMD` in exec form.** The shell form wraps the process in `/bin/sh`, which doesn't forward SIGTERM, so shutdowns are slow and get killed. Exec form fixes that.\n- **`NODE_ENV=production`.** Turns on Express and most libraries' production behaviour.\n\n**Not verified:** I haven't built or run this image, since this folder contains only the Dockerfile (no `package.json` or lockfile). Before shipping, run `docker build` and `npm ci` with your real lockfile, and confirm `npm start` is defined. If you have native modules, the slim image may need build tools in a builder stage.\n"
+      },
+      {
+        "case": "review-dockerfile",
+        "condition": "without",
+        "run": 1,
+        "score": 0.8333333333333334,
+        "checks": [
+          {
+            "label": "runs as a non-root user",
+            "pass": true
+          },
+          {
+            "label": "adds a HEALTHCHECK",
+            "pass": false
+          },
+          {
+            "label": "uses npm ci",
+            "pass": true
+          },
+          {
+            "label": "mentions .dockerignore",
+            "pass": true
+          },
+          {
+            "label": "pins the base image by digest",
+            "pass": true
+          },
+          {
+            "label": "exec-form CMD",
+            "pass": true
+          }
+        ],
+        "seconds": 21,
+        "exit": 0,
+        "output": "The original has eight lines and several serious problems. Here is the fixed version, followed by what changed and why.\n\n**`Dockerfile`**\n```dockerfile\n# syntax=docker/dockerfile:1\n# Pin to an exact patch release. Ideally add @sha256:<digest> after the tag.\nFROM node:22.11.0-bookworm-slim\n\nENV NODE_ENV=production\nWORKDIR /app\n\n# Copy manifests first so the dependency layer is cached until they change\nCOPY --chown=node:node package.json package-lock.json ./\nRUN npm ci --omit=dev && npm cache clean --force\n\nCOPY --chown=node:node . .\n\n# Drop root; the node image ships a non-root \"node\" user\nUSER node\n\nEXPOSE 3000\n# Exec form: signals reach the process directly\nCMD [\"npm\", \"start\"]\n```\n\n**`.dockerignore`** (new file, same folder)\n```\n.git\n.gitignore\nnode_modules\nnpm-debug.log*\n.env\n.env.*\nDockerfile\n.dockerignore\n```\n\n**What changed**\n\n- **`node:latest` → pinned version.** `latest` changes under you and can break builds or pull in unreviewed majors. I picked `22.11.0` as an example. Use the Node version your project targets (check `engines` in `package.json`) and pin the digest too for full reproducibility.\n- **Removed `ENV STRIPE_SECRET_KEY=sk_live_placeholder`.** Anything set with `ENV` is stored in the image and visible to anyone with `docker history` or `docker inspect`. Inject the key at runtime instead, e.g. `docker run -e STRIPE_SECRET_KEY=...` or a secrets manager. The `sk_live_` prefix suggests a live key. If a real key was ever in this file or its history, rotate it.\n- **Removed `curl https://example.com/setup.sh | sh`.** This runs unverified remote code as root at build time, and the URL is a placeholder domain. If the setup is needed, vendor the script into the repo, or download it pinned to a checksum and verify it before running.\n- **`COPY . .` split.** Copying manifests first means `npm ci` only reruns when dependencies change. `.dockerignore` keeps `.git`, `.env` files, and local `node_modules` out of the build context and image.\n- **`npm install` → `npm ci --omit=dev`.** `ci` installs exactly what's in the lockfile and fails if it's out of sync. `--omit=dev` keeps devDependencies out of the image.\n- **Runs as `node` instead of root.** If the container must write to disk, make those paths writable by `node` explicitly.\n- **`CMD npm start` → `CMD [\"npm\", \"start\"]`.** Exec form means the process gets signals such as SIGTERM directly rather than through a shell.\n- **`NODE_ENV=production`.** Enables production behavior in Express and most libraries.\n\n**Things to check before you ship it**\n\n- No `package.json` or lockfile was in the folder, so I assumed both exist at the root. `npm ci` fails without a lockfile.\n- If your build needs devDependencies (TypeScript, a bundler), `--omit=dev` will break it. Use a multi-stage build: install everything in a builder stage, run the build, then copy only the output and production deps into the final stage.\n- The app may not listen on 3000 or may need other env vars. `EXPOSE` is documentation only.\n- I did not run `docker build`, since there is no project code here to build against.\n"
+      },
+      {
+        "case": "review-dockerfile",
+        "condition": "with",
+        "run": 0,
+        "score": 1,
+        "checks": [
+          {
+            "label": "runs as a non-root user",
+            "pass": true
+          },
+          {
+            "label": "adds a HEALTHCHECK",
+            "pass": true
+          },
+          {
+            "label": "uses npm ci",
+            "pass": true
+          },
+          {
+            "label": "mentions .dockerignore",
+            "pass": true
+          },
+          {
+            "label": "pins the base image by digest",
+            "pass": true
+          },
+          {
+            "label": "exec-form CMD",
+            "pass": true
+          }
+        ],
+        "seconds": 27,
+        "exit": 0,
+        "output": "The original has 5 errors and 4 warnings from the auditor. I've written a fixed version below. I haven't built or run it, since I can't see the app's code, lockfile, port or health endpoint.\n\n```dockerfile\n# syntax=docker/dockerfile:1.7\n\n# Build stage: full dependencies, optional build step, then drop dev deps\nFROM node:20.18.1-bookworm-slim AS build\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN --mount=type=cache,target=/root/.npm npm ci\nCOPY . .\nRUN npm run build --if-present && npm prune --omit=dev\n\n# Runtime stage: no build tools, non-root, production env\nFROM node:20.18.1-bookworm-slim AS runtime\nENV NODE_ENV=production\nWORKDIR /app\nCOPY --from=build --chown=1000:1000 /app ./\nUSER 1000:1000\nEXPOSE 3000\nHEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \\\n  CMD [\"node\", \"-e\", \"require('http').get('http://127.0.0.1:3000/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\"]\nCMD [\"npm\", \"start\"]\n```\n\n`.dockerignore`:\n\n```\n.git\n.gitignore\n.env\n.env.*\n*.pem\n*.key\nnode_modules\ndist\nbuild\ncoverage\nnpm-debug.log*\nDockerfile\n.dockerignore\n.claude\n```\n\n**What changed and why**\n\n- **`FROM node:latest`** is now pinned to `20.18.1-bookworm-slim`. The `-slim` variant has less attack surface. Match the version to your `engines` field and add a digest (`@sha256:...`) for full reproducibility.\n- **`npm install`** is now `npm ci` against the lockfile, so installs are exact and repeatable.\n- **Layer caching:** the manifests are copied and installed before the source, so code changes don't reinstall dependencies.\n- **Multi-stage:** the build stage's compilers, caches and dev dependencies never reach the runtime image.\n- **`ENV STRIPE_SECRET_KEY=sk_live_...`** is removed. That value sat in the image layers and in `docker history`, and it was a live-key prefix. Rotate it if this image was ever pushed anywhere. Inject the real key at runtime, for example `docker run -e STRIPE_SECRET_KEY` or from your orchestrator's secret store.\n- **`RUN curl ... | sh`** is removed. Its contents are unknown and it ran as root with no verification. If the app really needs that setup script, vendor it into the repo or download it in a separate step with a pinned SHA-256 and `sha256sum -c` before running it.\n- **`USER 1000:1000`** runs as the `node` user (a numeric UID, so Kubernetes `runAsNonRoot` can verify it). Files are copied with matching ownership.\n- **`HEALTHCHECK`** is added. It assumes the app serves `GET /health` on port 3000. Change the path and port, or delete it if your orchestrator probes the container itself.\n- **`CMD`** is in exec form. Note that `npm` as PID 1 forwards signals only in recent versions. If shutdown is slow, run `docker run --init` or change the CMD to `[\"node\", \"server.js\"]` (your real entry file).\n- **`.dockerignore`** keeps `.git`, `.env*`, keys and `node_modules` out of the build context, so they can't be copied in by `COPY . .`.\n\n**Not verified:** I couldn't check that the image builds, that `npm start` runs, or that the health endpoint exists. To confirm, run `docker build -t app:test .`, then `docker run --rm app:test id` (it should show uid 1000), then run the container and hit `/health`. Re-running the auditor on the new file should show no errors.\n"
+      },
+      {
+        "case": "review-dockerfile",
+        "condition": "with",
+        "run": 1,
+        "score": 1,
+        "checks": [
+          {
+            "label": "runs as a non-root user",
+            "pass": true
+          },
+          {
+            "label": "adds a HEALTHCHECK",
+            "pass": true
+          },
+          {
+            "label": "uses npm ci",
+            "pass": true
+          },
+          {
+            "label": "mentions .dockerignore",
+            "pass": true
+          },
+          {
+            "label": "pins the base image by digest",
+            "pass": true
+          },
+          {
+            "label": "exec-form CMD",
+            "pass": true
+          }
+        ],
+        "seconds": 123,
+        "exit": 0,
+        "output": "I wrote the fixed version to `Dockerfile.hardened` and added a `.dockerignore`. I left your original `Dockerfile` untouched so you can compare or replace it.\n\n- `/private/var/folders/8k/_tk48sxd2vs_b7dml4vh_5jh0000gn/T/skillyard-eval-dockerfile-hardening-1t6cQ5/Dockerfile.hardened`\n- `/private/var/folders/8k/_tk48sxd2vs_b7dml4vh_5jh0000gn/T/skillyard-eval-dockerfile-hardening-1t6cQ5/.dockerignore`\n\n```dockerfile\n# syntax=docker/dockerfile:1.7\n\n# Stage 1: production dependencies only, installed from the lockfile\nFROM node:22.11.0-bookworm-slim AS deps\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN --mount=type=cache,target=/root/.npm npm ci --omit=dev\n\n# Stage 2: minimal runtime\nFROM node:22.11.0-bookworm-slim AS runtime\nENV NODE_ENV=production\nWORKDIR /app\n# App code is owned by root and read-only to the runtime user\nCOPY --from=deps /app/node_modules ./node_modules\nCOPY . .\nUSER 1000:1000\nEXPOSE 3000\n# TCP probe on the app port; swap for an HTTP health endpoint when one exists\nHEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \\\n  CMD [\"node\", \"-e\", \"require('net').connect(3000, '127.0.0.1').on('connect', () => process.exit(0)).on('error', () => process.exit(1))\"]\nCMD [\"npm\", \"start\"]\n```\n\n```\n.git\n.gitignore\n.env\n.env.*\n*.pem\n*.key\nnode_modules\nnpm-debug.log*\ndist\ncoverage\n.claude\nDockerfile*\n.dockerignore\n```\n\n**What changed and why**\n\n- **`node:latest` → `node:22.11.0-bookworm-slim`.** Pinned for reproducibility. I moved off Node 20 because it reached end of life in April 2026. Pin the digest too and bump it through Renovate or Dependabot.\n- **`ENV STRIPE_SECRET_KEY=sk_live_...` removed.** This is the most serious problem. A live-looking key is baked into the image and visible to anyone with `docker history`. If that value was real, rotate it. Inject the key at runtime from your secret store instead.\n- **`curl ... | sh` removed.** I can't see what `example.com/setup.sh` does, so I dropped it rather than guess. If you need something from it, download a pinned artifact, verify its checksum, and run it in a separate step. Note that `example.com` is a placeholder domain, so the original line may never have worked.\n- **`COPY . .` no longer runs before install.** Manifests are copied first, so code changes don't bust the dependency cache. `.dockerignore` keeps `.env`, keys, `.git` and local `node_modules` out of the build context.\n- **`npm install` → `npm ci --omit=dev`.** It installs exactly what the lockfile says and leaves out dev dependencies.\n- **Runs as UID 1000 (`node`), not root.** The official Node image ships that user. App code is root-owned and read-only to it.\n- **Exec-form `CMD`.** The process gets signals directly. Add `docker run --init` if the app spawns children.\n- **`HEALTHCHECK` added.** It's a TCP probe on port 3000 because I don't know your health endpoint. Switch it to HTTP once one exists.\n\n**Auditor results**\n\n- Original: 5 errors, 4 warnings.\n- Hardened: 0 errors, 0 warnings. It only suggests digest pinning.\n\n**Verification**\n\n- I built a sample Node app against the hardened Dockerfile in a scratch directory. Output: `uid=1000(node)`, image size 338MB, and health status `healthy`.\n- The sample build used a copy without the `--mount=type=cache` line. Docker's BuildKit builder isn't available here (buildx is missing), so the cache mount is untested.\n- I haven't checked the image against your real app, since I don't have its code.\n\n**Assumptions to confirm**\n\n- It's a Node app with a committed `package-lock.json`. `npm ci` fails without one.\n- `npm start` is the entrypoint and the app listens on port 3000.\n- There is no build step. If there is one, `--omit=dev` would remove a dependency the build needs, so move the build into the `deps` stage first.\n"
+      }
+    ],
+    "baseline": 0.8333333333333334,
+    "withSkill": 1,
+    "lift": 0.16666666666666663
+  },
+  {
+    "skill": "commit-messages",
+    "agent": "claude",
+    "model": "haiku",
+    "runs": 2,
+    "cases": [
+      {
+        "case": "breaking-change",
+        "condition": "without",
+        "run": 0,
+        "score": 0.5,
+        "checks": [
+          {
+            "label": "Conventional Commits subject",
+            "pass": false
+          },
+          {
+            "label": "marks the breaking change",
+            "pass": false
+          },
+          {
+            "label": "imperative mood",
+            "pass": true
+          },
+          {
+            "label": "has a body",
+            "pass": true
+          }
+        ],
+        "seconds": 6,
+        "exit": 0,
+        "output": "Switch user ids to UUID strings in `getUser`\n\n`getUser` now takes a string id and looks it up with `findByUuid`. Numeric ids are no longer accepted, so callers still passing a number will fail to type-check.\n\nCo-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>\n"
+      },
+      {
+        "case": "breaking-change",
+        "condition": "without",
+        "run": 1,
+        "score": 0.5,
+        "checks": [
+          {
+            "label": "Conventional Commits subject",
+            "pass": false
+          },
+          {
+            "label": "marks the breaking change",
+            "pass": false
+          },
+          {
+            "label": "imperative mood",
+            "pass": true
+          },
+          {
+            "label": "has a body",
+            "pass": true
+          }
+        ],
+        "seconds": 11,
+        "exit": 0,
+        "output": "Switch user ids in getUser to UUID strings\n\n`getUser` now takes a string id and looks the user up with `db.users.findByUuid`. Numeric ids are no longer accepted.\n"
+      },
+      {
+        "case": "breaking-change",
+        "condition": "with",
+        "run": 0,
+        "score": 1,
+        "checks": [
+          {
+            "label": "Conventional Commits subject",
+            "pass": true
+          },
+          {
+            "label": "marks the breaking change",
+            "pass": true
+          },
+          {
+            "label": "imperative mood",
+            "pass": true
+          },
+          {
+            "label": "has a body",
+            "pass": true
+          }
+        ],
+        "seconds": 7,
+        "exit": 0,
+        "output": "```\nrefactor(api)!: look up users by UUID string in getUser\n\nUser ids are now UUID strings, so getUser takes a string and resolves it\nwith db.users.findByUuid. Numeric ids are no longer accepted.\n\nBREAKING CHANGE: getUser(id) now requires a string UUID. Callers that pass\na numeric id must switch to the user's UUID.\n\nCo-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>\n```\n"
+      },
+      {
+        "case": "breaking-change",
+        "condition": "with",
+        "run": 1,
+        "score": 0.75,
+        "checks": [
+          {
+            "label": "Conventional Commits subject",
+            "pass": false
+          },
+          {
+            "label": "marks the breaking change",
+            "pass": true
+          },
+          {
+            "label": "imperative mood",
+            "pass": true
+          },
+          {
+            "label": "has a body",
+            "pass": true
+          }
+        ],
+        "seconds": 7,
+        "exit": 0,
+        "output": "Switch user IDs to UUID strings in getUser\n\nUser IDs are now UUID strings, so getUser takes a string and looks the user up with findByUuid. Numeric IDs are no longer accepted.\n\nBREAKING CHANGE: getUser(id) now takes a string UUID instead of a number. Callers that pass numeric IDs must be updated.\n\nCo-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>\n"
+      }
+    ],
+    "baseline": 0.5,
+    "withSkill": 0.875,
+    "lift": 0.375
+  }
+]

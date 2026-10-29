@@ -1,0 +1,15 @@
+{
+  "name": "commit-messages",
+  "version": "1.0.0",
+  "title": "Commit Messages",
+  "summary": "Write Conventional Commits messages that explain why, with a bundled linter to check them before committing.",
+  "category": "docs",
+  "tags": [
+    "git",
+    "commits",
+    "conventional-commits",
+    "linting"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

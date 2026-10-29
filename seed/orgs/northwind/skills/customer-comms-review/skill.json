@@ -1,0 +1,11 @@
+{
+  "name": "customer-comms-review",
+  "version": "1.0.0",
+  "title": "Northwind Customer Comms Review",
+  "summary": "Check Northwind Pay customer emails, in-app copy and notices for regulated wording before they ship.",
+  "category": "compliance",
+  "tags": ["communications", "regulatory", "copy", "review", "fintech"],
+  "license": "Proprietary",
+  "author": "Northwind Pay",
+  "visibility": "private"
+}

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skillyard</title>
+  <meta name="description" content="Open-source and private Agent Skills for Claude Code, Codex, Cursor and every AGENTS.md agent.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="#/"><span class="mark" aria-hidden="true"></span>Skillyard</a>
+    <nav>
+      <a href="#/">Browse</a>
+      <a href="#/orgs">Organizations</a>
+      <a href="#/connect">Connect an agent</a>
+      <a href="#/publish">Publish</a>
+      <a href="#/teams">For teams</a>
+    </nav>
+    <button id="auth" class="auth" type="button">Sign in</button>
+  </header>
+  <main id="app" tabindex="-1"></main>
+  <dialog id="login">
+    <form method="dialog" id="login-form">
+      <h2>Sign in with an org token</h2>
+      <p class="muted">Tokens let you see and install your organization's private skills. Ask an org admin, or create one with <code>skillyard token create --org &lt;org&gt;</code>. The token stays in this browser.</p>
+      <label for="token-input">Token</label>
+      <input id="token-input" name="token" autocomplete="off" spellcheck="false" placeholder="sy_…" required>
+      <p id="login-error" class="error" role="alert"></p>
+      <div class="row end">
+        <button value="cancel" formnovalidate class="ghost">Cancel</button>
+        <button value="ok" class="primary">Sign in</button>
+      </div>
+    </form>
+  </dialog>
+  <footer class="foot">
+    <span>Skillyard — skills for every agent. Open source (MIT).</span>
+    <span><a href="https://github.com/agentwik-labs/skillyard">GitHub</a> · <a href="#/connect">MCP endpoint</a></span>
+  </footer>
+  <script src="static.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

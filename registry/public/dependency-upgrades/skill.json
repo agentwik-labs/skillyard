@@ -1,0 +1,15 @@
+{
+  "name": "dependency-upgrades",
+  "version": "1.0.0",
+  "title": "Dependency Upgrades",
+  "summary": "Upgrade dependencies in risk-ordered batches, read changelogs first, and verify each batch with tests.",
+  "category": "devops",
+  "tags": [
+    "dependencies",
+    "upgrades",
+    "semver",
+    "security"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

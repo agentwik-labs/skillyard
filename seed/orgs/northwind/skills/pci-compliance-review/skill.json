@@ -1,0 +1,11 @@
+{
+  "name": "pci-compliance-review",
+  "version": "1.0.0",
+  "title": "Northwind PCI Compliance Review",
+  "summary": "Review Northwind Pay code and designs that touch cardholder data against PCI-DSS and internal controls.",
+  "category": "compliance",
+  "tags": ["pci-dss", "security", "cardholder-data", "review", "soc2"],
+  "license": "Proprietary",
+  "author": "Northwind Pay",
+  "visibility": "private"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "rest-api-design",
+  "version": "1.0.0",
+  "title": "REST API Design",
+  "summary": "Design consistent HTTP APIs: resource naming, status codes, one error format, cursor pagination, safe evolution.",
+  "category": "engineering",
+  "tags": [
+    "api",
+    "rest",
+    "http",
+    "openapi",
+    "pagination"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

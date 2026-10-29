@@ -1,0 +1,16 @@
+{
+  "name": "database-migrations",
+  "version": "1.0.0",
+  "title": "Database Migrations",
+  "summary": "Zero-downtime schema changes with expand/contract, batched backfills, online indexes and a SQL migration linter.",
+  "category": "data",
+  "tags": [
+    "database",
+    "migrations",
+    "postgres",
+    "mysql",
+    "zero-downtime"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

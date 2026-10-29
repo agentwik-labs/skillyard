@@ -1,0 +1,8 @@
+{
+  "name": "skillyard-testing",
+  "description": "Testing skills: unit-testing, web-accessibility-audit",
+  "version": "1.0.0",
+  "author": {
+    "name": "Skillyard Community"
+  }
+}

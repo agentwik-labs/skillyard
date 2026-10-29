@@ -1,0 +1,15 @@
+{
+  "name": "code-review",
+  "version": "1.0.0",
+  "title": "Code Review",
+  "summary": "Review diffs for real bugs, security holes and missing tests; report ranked findings with file:line and fixes.",
+  "category": "engineering",
+  "tags": [
+    "code-review",
+    "pull-requests",
+    "quality",
+    "security"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

@@ -1,0 +1,15 @@
+{
+  "name": "performance-profiling",
+  "version": "1.0.0",
+  "title": "Performance Profiling",
+  "summary": "Measure, profile and fix the dominant bottleneck, proving every speedup with before/after numbers.",
+  "category": "engineering",
+  "tags": [
+    "performance",
+    "profiling",
+    "latency",
+    "optimization"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

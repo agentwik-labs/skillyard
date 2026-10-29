@@ -1,0 +1,11 @@
+{
+  "name": "incident-response",
+  "version": "1.0.0",
+  "title": "Acme Incident Response",
+  "summary": "Run an Acme Cloud incident from page to postmortem: severity, roles, #inc-war-room, status updates.",
+  "category": "devops",
+  "tags": ["incident", "on-call", "sre", "postmortem", "status-page"],
+  "license": "Proprietary",
+  "author": "Acme Cloud",
+  "visibility": "private"
+}

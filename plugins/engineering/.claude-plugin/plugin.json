@@ -1,0 +1,8 @@
+{
+  "name": "skillyard-engineering",
+  "description": "Engineering skills: code-review, performance-profiling, rest-api-design, safe-refactoring, systematic-debugging",
+  "version": "1.0.0",
+  "author": {
+    "name": "Skillyard Community"
+  }
+}

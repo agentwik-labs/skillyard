@@ -1,0 +1,10 @@
+{
+  "name": "incident-postmortem",
+  "version": "1.0.0",
+  "title": "Incident Postmortem",
+  "summary": "Write blameless postmortems with a UTC timeline, measured impact, contributing factors, and owned, dated action items.",
+  "category": "devops",
+  "tags": ["incident", "postmortem", "sre", "blameless", "reliability"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

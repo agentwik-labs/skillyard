@@ -1,0 +1,11 @@
+{
+  "name": "deploy-runbook",
+  "version": "1.0.0",
+  "title": "Acme Deploy Runbook",
+  "summary": "Ship Acme Cloud services through dev, staging and prod with the acme CLI, gates and rollback steps.",
+  "category": "devops",
+  "tags": ["deploy", "kubernetes", "aws", "release", "rollback"],
+  "license": "Proprietary",
+  "author": "Acme Cloud",
+  "visibility": "private"
+}

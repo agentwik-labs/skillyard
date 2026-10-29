@@ -1,0 +1,10 @@
+{
+  "name": "readme-writing",
+  "version": "1.0.0",
+  "title": "README Writing",
+  "summary": "Write a README verified against the code: clear pitch, copy-paste quickstart with expected output, accurate config.",
+  "category": "docs",
+  "tags": ["readme", "documentation", "open-source", "onboarding"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

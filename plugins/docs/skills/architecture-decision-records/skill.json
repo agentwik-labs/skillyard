@@ -1,0 +1,10 @@
+{
+  "name": "architecture-decision-records",
+  "version": "1.0.0",
+  "title": "Architecture Decision Records",
+  "summary": "Write numbered, immutable ADRs: one decision, real alternatives, deciding criteria, and honest consequences.",
+  "category": "docs",
+  "tags": ["adr", "architecture", "decisions", "documentation"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "sql-review",
+  "version": "1.0.0",
+  "title": "SQL Review",
+  "summary": "Review queries and migrations for NULL traps, bad joins, missing indexes, and locks that would stall production.",
+  "category": "data",
+  "tags": ["sql", "postgres", "mysql", "migrations", "performance"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

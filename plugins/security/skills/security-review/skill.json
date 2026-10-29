@@ -1,0 +1,10 @@
+{
+  "name": "security-review",
+  "version": "1.0.0",
+  "title": "Security Review",
+  "summary": "Review code and PRs for exploitable vulnerabilities with source-to-sink traces, severity, and minimal fixes.",
+  "category": "security",
+  "tags": ["security", "code-review", "owasp", "appsec", "vulnerabilities"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

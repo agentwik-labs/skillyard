@@ -1,0 +1,11 @@
+{
+  "name": "api-style-guide",
+  "version": "1.0.0",
+  "title": "Northwind API Style Guide",
+  "summary": "Design and review Northwind Pay public and internal APIs: naming, money types, idempotency, errors.",
+  "category": "engineering",
+  "tags": ["api", "rest", "design", "payments", "go", "python"],
+  "license": "Proprietary",
+  "author": "Northwind Pay",
+  "visibility": "private"
+}

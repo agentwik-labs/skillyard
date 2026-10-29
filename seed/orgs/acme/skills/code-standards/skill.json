@@ -1,0 +1,11 @@
+{
+  "name": "code-standards",
+  "version": "1.0.0",
+  "title": "Acme Code Standards",
+  "summary": "Apply Acme Cloud's TypeScript, React and Postgres conventions when writing or reviewing code.",
+  "category": "engineering",
+  "tags": ["typescript", "react", "postgres", "code-review", "style"],
+  "license": "Proprietary",
+  "author": "Acme Cloud",
+  "visibility": "private"
+}

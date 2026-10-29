@@ -1,0 +1,35 @@
+{
+  "cases": [
+    {
+      "name": "rename-column",
+      "prompt": "Our Postgres app runs with rolling deploys and zero downtime. Write the migration plan and SQL to rename users.name to users.full_name. Answer directly, don't ask me questions.",
+      "checks": [
+        {
+          "type": "regex",
+          "value": "add\\s+column[^\\n]*full_name",
+          "label": "adds the new column first"
+        },
+        {
+          "type": "regex",
+          "value": "backfill",
+          "label": "backfills"
+        },
+        {
+          "type": "regex",
+          "value": "batch|LIMIT\\s+\\d+|chunk",
+          "label": "backfills in batches"
+        },
+        {
+          "type": "regex",
+          "value": "lock_timeout",
+          "label": "sets a lock timeout"
+        },
+        {
+          "type": "regex",
+          "value": "drop\\s+column[^\\n]*\\bname\\b",
+          "label": "drops the old column in a later step"
+        }
+      ]
+    }
+  ]
+}

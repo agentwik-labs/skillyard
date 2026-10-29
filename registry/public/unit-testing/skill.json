@@ -1,0 +1,15 @@
+{
+  "name": "unit-testing",
+  "version": "1.0.0",
+  "title": "Unit Testing",
+  "summary": "Write fast, deterministic unit tests through public interfaces that cover edge cases and fail for one reason.",
+  "category": "testing",
+  "tags": [
+    "unit-tests",
+    "tdd",
+    "mocking",
+    "coverage"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

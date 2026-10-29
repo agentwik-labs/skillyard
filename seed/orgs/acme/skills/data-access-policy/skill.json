@@ -1,0 +1,11 @@
+{
+  "name": "data-access-policy",
+  "version": "1.0.0",
+  "title": "Acme Data Access Policy",
+  "summary": "Decide whether and how customer data may be accessed, queried or exported at Acme Cloud.",
+  "category": "security",
+  "tags": ["data", "privacy", "access-control", "postgres", "audit"],
+  "license": "Proprietary",
+  "author": "Acme Cloud",
+  "visibility": "private"
+}

@@ -1,0 +1,8 @@
+{
+  "name": "skillyard-devops",
+  "description": "DevOps skills: dependency-upgrades, github-actions-ci, incident-postmortem",
+  "version": "1.0.0",
+  "author": {
+    "name": "Skillyard Community"
+  }
+}

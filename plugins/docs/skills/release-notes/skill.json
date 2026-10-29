@@ -1,0 +1,10 @@
+{
+  "name": "release-notes",
+  "version": "1.0.0",
+  "title": "Release Notes",
+  "summary": "Draft user-facing release notes and CHANGELOG entries from git history, with breaking changes and migration steps first.",
+  "category": "docs",
+  "tags": ["changelog", "release", "git", "semver", "documentation"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

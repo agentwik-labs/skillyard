@@ -1,0 +1,11 @@
+{
+  "name": "new-service-checklist",
+  "version": "1.0.0",
+  "title": "Acme New Service Checklist",
+  "summary": "Stand up a new Acme Cloud service with the required repo, infra, observability and ownership pieces.",
+  "category": "engineering",
+  "tags": ["services", "kubernetes", "observability", "checklist", "platform"],
+  "license": "Proprietary",
+  "author": "Acme Cloud",
+  "visibility": "private"
+}

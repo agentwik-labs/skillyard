@@ -1,0 +1,68 @@
+{
+  "name": "skillyard",
+  "owner": {
+    "name": "Skillyard Community"
+  },
+  "metadata": {
+    "description": "Open-source Agent Skills from Skillyard",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "skillyard-ai",
+      "source": "./plugins/ai",
+      "description": "AI skills: prompt-engineering",
+      "version": "1.0.0",
+      "category": "ai"
+    },
+    {
+      "name": "skillyard-data",
+      "source": "./plugins/data",
+      "description": "Data skills: csv-data-analysis, database-migrations, sql-review",
+      "version": "1.0.0",
+      "category": "data"
+    },
+    {
+      "name": "skillyard-devops",
+      "source": "./plugins/devops",
+      "description": "DevOps skills: dependency-upgrades, github-actions-ci, incident-postmortem",
+      "version": "1.0.0",
+      "category": "devops"
+    },
+    {
+      "name": "skillyard-docs",
+      "source": "./plugins/docs",
+      "description": "Docs skills: architecture-decision-records, commit-messages, pr-description, readme-writing, release-notes",
+      "version": "1.0.0",
+      "category": "docs"
+    },
+    {
+      "name": "skillyard-engineering",
+      "source": "./plugins/engineering",
+      "description": "Engineering skills: code-review, performance-profiling, rest-api-design, safe-refactoring, systematic-debugging",
+      "version": "1.0.0",
+      "category": "engineering"
+    },
+    {
+      "name": "skillyard-product",
+      "source": "./plugins/product",
+      "description": "Product skills: meeting-to-action-items, technical-spec-writing",
+      "version": "1.0.0",
+      "category": "product"
+    },
+    {
+      "name": "skillyard-security",
+      "source": "./plugins/security",
+      "description": "Security skills: dockerfile-hardening, secrets-hygiene, security-review",
+      "version": "1.0.0",
+      "category": "security"
+    },
+    {
+      "name": "skillyard-testing",
+      "source": "./plugins/testing",
+      "description": "Testing skills: unit-testing, web-accessibility-audit",
+      "version": "1.0.0",
+      "category": "testing"
+    }
+  ]
+}

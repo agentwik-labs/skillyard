@@ -1,0 +1,10 @@
+{
+  "name": "prompt-engineering",
+  "version": "1.0.0",
+  "title": "Prompt Engineering",
+  "summary": "Write and tune LLM prompts with explicit context, edge-case rules and formats, proven against a small eval set.",
+  "category": "ai",
+  "tags": ["prompts", "llm", "evals", "system-prompt", "agents"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

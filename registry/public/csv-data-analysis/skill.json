@@ -1,0 +1,10 @@
+{
+  "name": "csv-data-analysis",
+  "version": "1.0.0",
+  "title": "CSV Data Analysis",
+  "summary": "Profile a CSV, catch data-quality traps, then answer the question with denominators, caveats, and rerunnable code.",
+  "category": "data",
+  "tags": ["csv", "data-analysis", "data-quality", "profiling", "spreadsheets"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

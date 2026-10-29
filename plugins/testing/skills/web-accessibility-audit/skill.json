@@ -1,0 +1,10 @@
+{
+  "name": "web-accessibility-audit",
+  "version": "1.0.0",
+  "title": "Web Accessibility Audit",
+  "summary": "Audit pages against WCAG 2.2 AA with a static HTML checker plus keyboard walk, and ship prioritized code fixes.",
+  "category": "testing",
+  "tags": ["accessibility", "a11y", "wcag", "html", "frontend"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

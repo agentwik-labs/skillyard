@@ -1,0 +1,15 @@
+{
+  "name": "systematic-debugging",
+  "version": "1.0.0",
+  "title": "Systematic Debugging",
+  "summary": "Find root causes by reproducing, testing one hypothesis at a time and bisecting before writing any fix.",
+  "category": "engineering",
+  "tags": [
+    "debugging",
+    "root-cause",
+    "bisect",
+    "regressions"
+  ],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

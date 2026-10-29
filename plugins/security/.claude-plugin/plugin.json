@@ -1,0 +1,8 @@
+{
+  "name": "skillyard-security",
+  "description": "Security skills: dockerfile-hardening, secrets-hygiene, security-review",
+  "version": "1.0.0",
+  "author": {
+    "name": "Skillyard Community"
+  }
+}

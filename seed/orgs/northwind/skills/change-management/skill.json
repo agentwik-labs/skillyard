@@ -1,0 +1,11 @@
+{
+  "name": "change-management",
+  "version": "1.0.0",
+  "title": "Northwind Change Management",
+  "summary": "Raise, approve and record production changes at Northwind Pay per SOC 2 change-control rules.",
+  "category": "compliance",
+  "tags": ["change-control", "soc2", "jira", "release", "audit"],
+  "license": "Proprietary",
+  "author": "Northwind Pay",
+  "visibility": "private"
+}

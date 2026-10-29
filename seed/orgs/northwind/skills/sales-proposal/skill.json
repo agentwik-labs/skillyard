@@ -1,0 +1,11 @@
+{
+  "name": "sales-proposal",
+  "version": "1.0.0",
+  "title": "Northwind Sales Proposal",
+  "summary": "Draft Northwind Pay sales proposals with approved pricing, security claims and the standard outline.",
+  "category": "sales",
+  "tags": ["sales", "proposal", "pricing", "rfp"],
+  "license": "Proprietary",
+  "author": "Northwind Pay",
+  "visibility": "private"
+}

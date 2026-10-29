@@ -1,0 +1,11 @@
+{
+  "name": "brand-voice",
+  "version": "1.0.0",
+  "title": "Acme Brand Voice",
+  "summary": "Write product copy, docs and posts in Acme Cloud's voice, with approved terms and banned phrases.",
+  "category": "docs",
+  "tags": ["writing", "brand", "marketing", "copy"],
+  "license": "Proprietary",
+  "author": "Acme Cloud",
+  "visibility": "public"
+}

@@ -1,0 +1,36 @@
+{
+  "cases": [
+    {
+      "name": "breaking-change",
+      "files": {
+        "change.diff": "--- a/src/api/users.ts\n+++ b/src/api/users.ts\n@@ -10,7 +10,7 @@\n-export async function getUser(id: number) {\n+export async function getUser(id: string) {\n   // user ids are now UUID strings; numeric ids are no longer accepted\n-  return db.users.find(id)\n+  return db.users.findByUuid(id)\n }\n"
+      },
+      "prompt": "Write the git commit message for the staged change in change.diff. Output only the commit message.",
+      "checks": [
+        {
+          "type": "regex",
+          "value": "^(feat|fix|refactor|perf|chore)(\\([^)]+\\))?!?: ",
+          "flags": "im",
+          "label": "Conventional Commits subject"
+        },
+        {
+          "type": "regex",
+          "value": "BREAKING CHANGE:|^\\w+(\\([^)]+\\))?!:",
+          "flags": "m",
+          "label": "marks the breaking change"
+        },
+        {
+          "type": "not_regex",
+          "value": "^(\\w+(\\([^)]+\\))?!?: )?(Added|Changed|Updated|Fixed)\\b",
+          "flags": "m",
+          "label": "imperative mood"
+        },
+        {
+          "type": "regex",
+          "value": "\\n\\s*\\n\\S",
+          "label": "has a body"
+        }
+      ]
+    }
+  ]
+}

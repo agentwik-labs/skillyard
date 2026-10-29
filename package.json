@@ -1,0 +1,26 @@
+{
+  "name": "skillyard",
+  "version": "0.1.0",
+  "description": "A skill registry for AI agents: open-source and company-private Agent Skills, installable into Claude Code, Codex, Cursor and any AGENTS.md agent, and served over MCP.",
+  "type": "module",
+  "bin": {
+    "skillyard": "bin/skillyard.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "web"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node bin/skillyard.js serve",
+    "seed": "node bin/skillyard.js seed",
+    "dev": "node bin/skillyard.js seed && node bin/skillyard.js serve",
+    "test": "node --test test/*.test.js",
+    "validate": "node bin/skillyard.js validate registry/public seed/orgs/*/skills",
+    "build:marketplace": "node bin/skillyard.js export claude-marketplace --out ."
+  },
+  "license": "MIT"
+}
