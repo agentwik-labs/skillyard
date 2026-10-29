@@ -13,7 +13,7 @@ const RULES = [
   ['slack-token', 'critical', 'all', /\bxox[abpr]-[A-Za-z0-9-]{20,}\b/, 'Slack token'],
   ['ai-key', 'critical', 'all', /\bsk-(?:ant-)?[A-Za-z0-9_-]{32,}\b/, 'AI provider API key'],
   ['prompt-override', 'critical', 'doc', /\b(?:ignore|disregard|forget)\s+(?:all\s+|any\s+)?(?:previous|prior|earlier|above|system)\s+(?:instructions|prompts?|rules)\b/i, 'tries to override the agent\'s instructions'],
-  ['conceal-from-user', 'critical', 'doc', /\b(?:do\s+not|don't|never)\s+(?:tell|inform|let)\s+the\s+user\s+(?:that\s+you|about\s+(?:this|these|the|any)\s+(?:action|change|command|step|file|request)s?|know)\b|\b(?:do\s+not|don't|never)\s+(?:tell|inform)\s+the\s+user\s*(?:[.!,;]|$)|\bwithout\s+(?:telling|informing|notifying)\s+the\s+user\b|\b(?:hide|conceal|keep)\s+(?:this|it|these\s+\w+)\s+(?:secret\s+)?from\s+the\s+user\b/i, 'asks the agent to hide actions from the user'],
+  ['conceal-from-user', 'critical', 'doc', /\b(?:do\s+not|don't|never)\s+(?:tell|inform|let)\s+the\s+user\s+(?:that\s+you|about\b|know)\b|\b(?:do\s+not|don't|never)\s+(?:tell|inform)\s+the\s+user\s*(?:[.!,;]|$)|\bwithout\s+(?:telling|informing|notifying)\s+the\s+user\b|\b(?:hide|conceal|keep)\s+(?:this|it|these\s+\w+)\s+(?:secret\s+)?from\s+the\s+user\b/i, 'asks the agent to hide actions from the user'],
   ['hidden-unicode', 'critical', 'all', /[\u202A-\u202E\u2066-\u2069]|[\u{E0000}-\u{E007F}]/u, 'bidi-control or Unicode tag characters (can hide instructions)'],
   ['zero-width', 'warning', 'all', /[\u200B\u200C\u2060-\u2064]|(?<!^)\uFEFF/u, 'zero-width characters'],
   ['pipe-to-shell', 'critical', 'script', /\b(?:curl|wget)\b[^\n|]*\|\s*(?:sudo\s+)?(?:ba|z)?sh\b/, 'downloads and runs remote code'],

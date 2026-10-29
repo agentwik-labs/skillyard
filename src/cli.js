@@ -44,7 +44,7 @@ Authoring
   new <name> [--dir .]                           Scaffold a new skill
   validate <dir...>                              Check skill directories (or folders of them)
   scan <dir...> [--json out.json] [--all]        Security-scan every skill found under the given folders
-  eval <dir...> [--agent claude|codex] [--model m] [--runs n] [--out report.md]
+  eval <dir...> [--agent claude|codex] [--model m] [--runs n] [--tools Skill,Read] [--out report.md]
                                                  Measure lift: run evals/evals.json with and without the skill
   publish <dir> --org <org> [--visibility public|private]
 
@@ -513,7 +513,7 @@ async function evalCmd(args, f) {
   if (!args.length) throw new Error('usage: skillyard eval <skill-dir...> [--agent claude|codex] [--model haiku] [--runs 1] [--out report.md]');
   const reports = [];
   for (const dir of args) {
-    reports.push(await evalSkill(dir, { agent: f.agent || 'claude', model: f.model, runs: Number(f.runs) || 1, log: (l) => console.log(l) }));
+    reports.push(await evalSkill(dir, { agent: f.agent || 'claude', model: f.model, tools: f.tools ? String(f.tools).split(',') : undefined, runs: Number(f.runs) || 1, log: (l) => console.log(l) }));
   }
   const md = evalMarkdown(reports);
   console.log(`\n${md.split('\n<details>')[0]}`);

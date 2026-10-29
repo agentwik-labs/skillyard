@@ -13,7 +13,7 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'skillyard-test-'));
 let server; let base; let acmeToken; let acmeRead; let otherToken;
 
 const skill = (name, { version = '1.0.0', body = 'Follow these steps carefully when doing the thing. '.repeat(3), extra = {}, visibility } = {}) => ({
-  'SKILL.md': Buffer.from(`---\nname: ${name}\ndescription: Does ${name} things. Use when asked to ${name}.\nlicense: MIT\n---\n\n# ${name}\n\n${body}\n`),
+  'SKILL.md': Buffer.from(`---\nname: ${name}\ndescription: Does ${name} things for the team in a careful way. Use when asked to ${name}.\nlicense: MIT\n---\n\n# ${name}\n\n${body}\n`),
   'skill.json': Buffer.from(JSON.stringify({ name, version, title: name, summary: `${name} summary`, category: 'engineering', tags: ['t'], ...(visibility ? { visibility } : {}) })),
   ...extra,
 });
@@ -193,5 +193,29 @@ test('bundled seed content is valid and passes the scan', () => {
     assert.ok(v.ok, `${d}: ${v.errors.join('; ')}`);
     assert.equal(v.manifest.name, path.basename(d));
     assert.equal(scanFiles(files).critical, 0, d);
+  }
+});
+
+test('good-vs-bad gallery: every bad example is caught the way the catalog says', () => {
+  const root = path.join(import.meta.dirname, '..', 'examples');
+  const { lessons } = JSON.parse(fs.readFileSync(path.join(root, 'catalog.json'), 'utf8'));
+  const load = (rel) => {
+    const files = {};
+    const walk = (a, r) => fs.readdirSync(a, { withFileTypes: true }).forEach((e) => {
+      if (e.name === 'evals') return;
+      e.isDirectory() ? walk(path.join(a, e.name), `${r}${e.name}/`) : (files[r + e.name] = fs.readFileSync(path.join(a, e.name)));
+    });
+    walk(path.join(root, rel), '');
+    return { v: validateFiles(files), s: scanFiles(files) };
+  };
+  assert.equal(lessons.length, 12);
+  for (const l of lessons) {
+    const { v, s } = load(l.bad);
+    const flagged = { scan: s.findings.length > 0, validate: !v.ok || v.warnings.length > 0 };
+    if (l.caughtBy.includes('scan')) assert.ok(flagged.scan, `${l.id}: scanner should flag it`);
+    if (l.caughtBy.includes('validate')) assert.ok(flagged.validate, `${l.id}: validator should flag it`);
+    if (!l.caughtBy.includes('scan') && !l.caughtBy.includes('validate')) assert.ok(v.ok && s.findings.length === 0, `${l.id}: should pass static checks (that is the lesson)`);
+    const good = load(l.good);
+    assert.ok(good.v.ok && good.s.critical === 0, `${l.id}: good version should pass`);
   }
 });

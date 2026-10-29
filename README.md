@@ -17,7 +17,8 @@ npx skillyard install code-review @acme/deploy-runbook --agent claude,codex --sa
 to see two fictional companies' private skills).
 
 **Reports:** [We scanned the 34 most-installed skill repos](reports/2026-10-top-skills-scan.md) ·
-[Do skills actually help? Lift evals](reports/2026-10-lift-evals.md)
+[Do skills actually help? Lift evals](reports/2026-10-lift-evals.md) ·
+[Good skills, bad skills: 12 examples and why](examples/README.md)
 
 ## What's in the box
 

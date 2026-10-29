@@ -1,0 +1,278 @@
+[
+  {
+    "skill": "notes-v2",
+    "agent": "claude",
+    "model": "haiku",
+    "tools": [
+      "Skill"
+    ],
+    "runs": 2,
+    "cases": [
+      {
+        "case": "ship-to-prod",
+        "condition": "without",
+        "run": 0,
+        "score": 0,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": false
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": false
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": false
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": false
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": false
+          }
+        ],
+        "seconds": 14,
+        "exit": 0,
+        "output": "I couldn't find Acme Cloud's billing-api deploy process on this machine. There's no billing-api checkout here, and the `acme` CLI isn't installed. So I can't give you Acme's exact commands. Below is the standard flow for shipping a commit, with the commands I can verify. Replace the placeholders with your team's real pipeline steps, which are usually in the billing-api repo's README, `docs/deploy*`, or `.github/workflows/`.\n\n**1. Confirm the commit and where it lives**\n```bash\ncd /path/to/billing-api\ngit fetch origin\ngit show --stat a3f9c21          # what changed\ngit branch -a --contains a3f9c21  # which branches include it\ngit log --oneline -1 origin/main  # is it already on main?\n```\n\n**2. Check that the commit is on the branch your prod pipeline deploys from** (usually `main`). If it isn't, get it merged through your normal PR flow. Don't push straight to the prod branch.\n\n**3. Confirm CI passed for that commit**\n```bash\ngh run list --commit a3f9c21 --limit 5\ngh run view <run-id> --log-failed   # only if something failed\n```\n\n**4. Trigger the production deploy.** This is where Acme's process matters, and it may be one of:\n- A tag-triggered release: `git tag -a v<x.y.z> a3f9c21 -m \"billing-api <x.y.z>\"` then `git push origin v<x.y.z>`\n- A manual pipeline run: `gh workflow run <deploy-workflow.yml> -f ref=a3f9c21 -f environment=production`\n- An internal deploy tool or approval UI\n\nCheck which one billing-api uses before you run anything.\n\n**5. Verify the rollout**\n```bash\ngh run watch <deploy-run-id>\n```\nThen check the service's health endpoint, dashboards, and error rate for the first 15 to 30 minutes.\n\n**6. Rollback plan:** redeploy the previous known-good commit through the same deploy path. Find it with `git log --oneline -5 origin/main`.\n\nTo get the exact commands, point me at the billing-api repo (or paste its deploy doc or workflow file) and I'll write out the steps for your pipeline.\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "without",
+        "run": 1,
+        "score": 0,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": false
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": false
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": false
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": false
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": false
+          }
+        ],
+        "seconds": 24,
+        "exit": 0,
+        "output": "I couldn't find Acme Cloud's billing-api repo, pipeline config, or deploy runbook on this machine, so I can't give you your team's exact production command. Below is the standard sequence for a git-tagged, CI-gated deploy. Replace the `<…>` placeholders and the deploy step with what your runbook specifies.\n\n**1. Confirm the commit is what you think it is**\n```bash\ncd <path-to>/billing-api\ngit fetch origin\ngit cat-file -t a3f9c21                    # prints \"commit\" if it exists\ngit log -1 --oneline a3f9c21\ngit branch -r --contains a3f9c21           # should list origin/main (or your release branch)\n```\n\n**2. Confirm CI passed on that exact SHA**\n```bash\ngh api repos/<org>/billing-api/commits/a3f9c21/check-runs \\\n  --jq '.check_runs[] | \"\\(.name): \\(.conclusion)\"'\n```\nEvery required check should say `success`. Don't deploy anything still `pending` or `failure`.\n\n**3. Tag the commit for release** (skip this if your pipeline deploys from branches)\n```bash\ngit tag -a v<X.Y.Z> a3f9c21 -m \"billing-api v<X.Y.Z>\"\ngit push origin v<X.Y.Z>\n```\n\n**4. Deploy**\nThis is the step I can't know for Acme Cloud. Use the command or pipeline your team documents. A typical Kubernetes version looks like:\n```bash\nkubectl config current-context             # confirm you are pointed at PRODUCTION\nkubectl -n <prod-namespace> set image deployment/billing-api \\\n  billing-api=<registry>/billing-api:a3f9c21\nkubectl -n <prod-namespace> rollout status deployment/billing-api --timeout=5m\n```\nIf it is a pipeline, the usual step is approving the production environment in the CI UI for the tag or SHA above.\n\n**5. Verify**\n```bash\ncurl -fsS https://<billing-api-prod-host>/health\nkubectl -n <prod-namespace> get pods -l app=billing-api\n```\nThen check error rate and latency on your dashboards for about 10–15 minutes.\n\n**6. Rollback, if needed**\n```bash\nkubectl -n <prod-namespace> rollout undo deployment/billing-api\n```\nOr redeploy the previous tag.\n\nTo get the real commands for step 4, check Acme Cloud's internal deploy docs or ask whoever owns billing-api. If you point me at the billing-api repo or its CI config, I can replace the placeholders with the exact commands.\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "with",
+        "run": 0,
+        "score": 0.2,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": false
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": true
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": false
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": false
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": false
+          }
+        ],
+        "seconds": 13,
+        "exit": 0,
+        "output": "I couldn't find Acme Cloud's billing-api repo, deploy config, or runbook in this environment, so I can't give you the exact commands for your pipeline. Here is the standard flow for shipping a specific commit, with placeholders for the parts only your team's docs define.\n\n**1. Confirm the commit and where it lives**\n```bash\ncd path/to/billing-api\ngit fetch origin\ngit cat-file -t a3f9c21          # should print \"commit\"\ngit show --stat a3f9c21          # review what's changing\ngit branch -r --contains a3f9c21 # confirm it's on the branch you deploy from (usually origin/main)\n```\n\n**2. Check CI passed for that commit**\n```bash\ngh run list --commit a3f9c21 --limit 5\ngh run view <run-id> --log-failed   # only if something failed\n```\nIf your pipeline is not GitHub Actions, check its dashboard instead.\n\n**3. Tag the release (if your process uses tags)**\n```bash\ngit tag -a v<X.Y.Z> a3f9c21 -m \"billing-api v<X.Y.Z>\"\ngit push origin v<X.Y.Z>\n```\n\n**4. Deploy to staging first, then production**\nUse your team's mechanism, for example:\n```bash\n<your-deploy-command> --service billing-api --env staging --version a3f9c21\n<your-deploy-command> --service billing-api --env production --version a3f9c21\n```\nThis is a placeholder. Acme's real command, pipeline trigger, or approval step is what you need from the internal docs or your team lead.\n\n**5. Verify**\n- Check the deployed version or commit hash in the service's health or version endpoint.\n- Watch error rates, latency, and billing-specific metrics (charge success, invoice jobs) for at least one cycle.\n- If you have a migration in this commit, confirm it ran and is backward compatible.\n\n**6. Rollback plan**\nHave the previous known-good version ready (`git log -2 --oneline` on the release branch shows it). Roll back with the same deploy command using the previous version.\n\n**Where to get the exact steps:** check the Acme Cloud internal engineering runbook or the billing-api README for the deploy section, and ask in the team's deploy channel if the process requires a change request or approval. If you can share the repo path or the README's deploy section, I can turn these placeholders into the exact commands.\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "with",
+        "run": 1,
+        "score": 1,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": true
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": true
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": true
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": true
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": true
+          }
+        ],
+        "seconds": 16,
+        "exit": 0,
+        "output": "I couldn't find an authoritative Acme Cloud deploy process. This folder has no billing-api repo and no runbook, so I couldn't check that `a3f9c21` exists or is green. The only deploy doc I found was a local skill called `notes-v2`, and its header says it is \"a BAD skill on purpose\" from a teaching gallery. Treat the steps below as an unverified sketch, and confirm them with your platform or deploy owner before running anything against prod.\n\nWith that caveat, the flow it describes is:\n\n1. **Confirm CI is green for the commit**\n   `acme ci status billing-api --sha a3f9c21`\n2. **Confirm the commit is healthy on dev for at least 15 minutes**\n   `acme deploy status billing-api --env dev`\n3. **Promote to staging**\n   `acme deploy promote billing-api --env staging --sha a3f9c21`\n4. **Run the smoke suite, which must pass**\n   `acme smoke run billing-api --env staging`\n5. **Check for a deploy freeze.** If one is active, stop. Exceptions need VP Eng approval in #deploy-exceptions.\n   `acme deploy freeze status`\n6. **Post in #deploys** with the service, sha, Linear ticket, and \"promoting to prod\".\n7. **Promote to prod.** The CLI rolls out us-east-1 as a 10% canary, waits 20 minutes, then rolls out to full and EU.\n   `acme deploy promote billing-api --env prod --sha a3f9c21`\n8. **Watch the canary**\n   `acme dash canary billing-api`\n9. **Reply \"done\" in the #deploys thread** with the final rollout time.\n\n**Rollback triggers** (during canary or within 60 minutes of full rollout): 5xx above 1% for 5 minutes, p95 latency more than 30% above the 7-day baseline, or any SEV1/SEV2 alert on the service.\nRollback: `acme deploy rollback billing-api --env prod`. It redeploys the previous image but does not revert migrations.\n\n**Rules the same doc lists:**\n- Prod deploys go Monday–Thursday, 09:00–16:00 US Eastern, with no Friday prod deploys.\n- Migrations ship as a separate, earlier, backward-compatible deploy.\n- Risky behavior goes behind feature flags that default to off in prod.\n- Don't use `--force-unlock` on the promotion lock unless the lock holder confirms in #deploys.\n\nI haven't run any of these commands. If you confirm the process with your team and tell me where the billing-api repo is, I can check the commit and walk through the steps with you.\n"
+      }
+    ],
+    "baseline": 0,
+    "withSkill": 0.6,
+    "lift": 0.6
+  },
+  {
+    "skill": "deploy-runbook",
+    "agent": "claude",
+    "model": "haiku",
+    "tools": [
+      "Skill"
+    ],
+    "runs": 2,
+    "cases": [
+      {
+        "case": "ship-to-prod",
+        "condition": "without",
+        "run": 0,
+        "score": 0,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": false
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": false
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": false
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": false
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": false
+          }
+        ],
+        "seconds": 16,
+        "exit": 0,
+        "output": "I can't give you Acme Cloud's exact production steps. Nothing on this machine describes them. The working directory is empty, there's no billing-api checkout under your home directory, and there's no Acme deploy config or CLI setup I can find. Any command I wrote for the deploy itself would be a guess.\n\nWhat I can give you is the verification to run first, using standard git commands, plus where the real steps probably live.\n\n**1. Confirm the commit exists and what it changes**\n```bash\ncd path/to/billing-api\ngit fetch origin\ngit show --stat a3f9c21\ngit branch -r --contains a3f9c21\n```\nThe last command shows which remote branches contain the commit. If it's only on a feature branch, it hasn't been merged to the branch that deploys to production.\n\n**2. Check that it's on the production branch and passed CI**\n```bash\ngit merge-base --is-ancestor a3f9c21 origin/main && echo \"on main\"\n```\nReplace `origin/main` with whatever branch your pipeline deploys from. Then check CI for that commit in your CI system.\n\n**3. Deploy**\nAcme's internal runbook or deploy tooling is the source for this step, since I can't see it. Check the team's internal docs or wiki for \"billing-api deploy\" or \"production release\". Or ask whoever owns billing-api, or your platform/infra team in Slack.\n\nIf you can paste the runbook text, or tell me the deploy tool name (a CLI, a CI job, a GitOps repo), I'll turn it into exact commands for commit `a3f9c21`.\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "without",
+        "run": 1,
+        "score": 0,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": false
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": false
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": false
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": false
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": false
+          }
+        ],
+        "seconds": 12,
+        "exit": 0,
+        "output": "I can't give you Acme Cloud's exact production commands. This session has no access to billing-api's repo, CI config, or your internal deploy runbook. The working directory is empty and isn't a git repo, and I found no Acme-specific docs. Any exact commands I wrote would be guesses, so here is the general path and how to fill in the specifics.\n\n**1. Confirm the commit is what you think it is**\n```bash\ngit clone <billing-api repo URL> && cd billing-api\ngit fetch origin\ngit show --stat a3f9c21        # confirm the author, message, and files changed\ngit branch -a --contains a3f9c21   # confirm it's on main or the release branch\n```\n\n**2. Check that it's been tested and built**\n- Confirm CI passed for `a3f9c21` in your pipeline (GitHub Actions, Buildkite, etc.). If the repo is on GitHub, you can run `gh run list --commit a3f9c21`.\n- Check whether the change includes a database migration, a feature flag, or config changes. Those need their own steps before the deploy.\n\n**3. Deploy to staging first, if your process requires it**\nUse your pipeline's deploy job or your internal deploy tool for `a3f9c21` in staging, then run the billing smoke tests and check the billing dashboards.\n\n**4. Deploy to production**\nUse the production deploy job or tool your team's runbook names, pinned to the exact SHA `a3f9c21`, not a branch name. Get whatever approval your process requires. Watch rollout health, error rates, and payment-success metrics as it goes.\n\n**5. Verify and record**\nRun the production smoke checks from the runbook, confirm the running version matches `a3f9c21`, and note the deploy in your release channel.\n\n**Rollback:** Know the previous good SHA and the rollback command before you start.\n\nTo get the exact commands, look in the billing-api repo's README, `docs/deploy*`, or `.github/workflows/` for the deploy job, or ask your platform/SRE team for the production runbook. If you paste the deploy workflow file or runbook here, I'll turn it into a step-by-step checklist with the exact commands.\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "with",
+        "run": 0,
+        "score": 1,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": true
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": true
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": true
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": true
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": true
+          }
+        ],
+        "seconds": 13,
+        "exit": 0,
+        "output": "I haven't run anything. Prod promotion is outward-facing, so these are the steps to run, in order. Each one gates the next.\n\n**Timing:** Today is Thursday, 2026-10-29. Prod deploys are allowed Monday to Thursday, 09:00 to 16:00 US Eastern. The canary wait alone is 20 minutes, so start by mid-afternoon Eastern at the latest, or wait until Monday.\n\n## Steps\n\n1. **Confirm CI is green**\n   ```\n   acme ci status billing-api --sha a3f9c21\n   ```\n   Stop if it isn't green.\n\n2. **Confirm dev is healthy with this commit**\n   ```\n   acme deploy status billing-api --env dev\n   ```\n   It must show a3f9c21 running and healthy for at least 15 minutes.\n\n3. **Promote to staging**\n   ```\n   acme deploy promote billing-api --env staging --sha a3f9c21\n   ```\n\n4. **Run the staging smoke suite**\n   ```\n   acme smoke run billing-api --env staging\n   ```\n   It must pass.\n\n5. **Check for a deploy freeze**\n   ```\n   acme deploy freeze status\n   ```\n   If a freeze is active, stop. An exception needs VP Eng approval in #deploy-exceptions.\n\n6. **Post in #deploys** with the service (billing-api), the sha (a3f9c21), the Linear ticket, and \"promoting to prod\".\n\n7. **Promote to prod**\n   ```\n   acme deploy promote billing-api --env prod --sha a3f9c21\n   ```\n   The CLI rolls out us-east-1 as a 10% canary, waits 20 minutes, then rolls out full and EU (eks-prod-euw1). Only one prod promotion per service runs at a time. Don't use `--force-unlock` unless the lock holder confirms in #deploys.\n\n8. **Watch the canary**\n   ```\n   acme dash canary billing-api\n   ```\n   Roll back immediately if any of these happen during canary or within 60 minutes of full rollout:\n   - 5xx rate above 1% for 5 minutes\n   - p95 latency more than 30% above the 7-day baseline\n   - any SEV1 or SEV2 alert on the service\n\n   Rollback:\n   ```\n   acme deploy rollback billing-api --env prod\n   ```\n   This redeploys the previous image. It does not revert database migrations.\n\n9. **Reply in the #deploys thread** with \"done\" and the final rollout time.\n\n## Rules that apply here\n\n- No prod deploys on Friday, and none outside the Monday–Thursday, 09:00–16:00 ET window.\n- If a2f9c21 includes database migrations, they must have shipped in a separate earlier deploy and be backward compatible for one release.\n- Risky behavior should be behind a LaunchDarkly flag (project `acme-app`), defaulting to off in prod.\n- Secrets come from AWS Secrets Manager through External Secrets, never Helm values.\n\nOnce you're ready, I can run steps 1 through 5 from here (they're read-only apart from the staging promotion), then stop for your go-ahead before step 7.\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "with",
+        "run": 1,
+        "score": 1,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": true
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": true
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": true
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": true
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": true
+          }
+        ],
+        "seconds": 14,
+        "exit": 0,
+        "output": "I haven't run anything. Shipping to prod is outward-facing, so I've written out the steps for you to run. Today is Thursday, 2026-10-29, which is inside the Mon–Thu window, but check the time before you start (see the timing note at the end).\n\n## Ship billing-api a3f9c21 to prod\n\n**0. Set variables**\n```bash\nSVC=billing-api\nSHA=a3f9c21   # use the full 40-char SHA if the CLI rejects the short form\n```\n\n**1. Confirm CI is green**\n```bash\nacme ci status $SVC --sha $SHA\n```\nStop if it isn't green.\n\n**2. Confirm the commit is on dev and healthy for 15+ minutes**\n```bash\nacme deploy status $SVC --env dev\n```\nCheck that the running SHA is `$SHA` and the deploy has been healthy for at least 15 minutes.\n\n**3. Promote to staging**\n```bash\nacme deploy promote $SVC --env staging --sha $SHA\n```\n\n**4. Run the smoke suite (must pass)**\n```bash\nacme smoke run $SVC --env staging\n```\n\n**5. Check for a deploy freeze**\n```bash\nacme deploy freeze status\n```\nIf a freeze is active, stop. Exceptions need VP Eng approval in #deploy-exceptions.\n\n**6. Announce in #deploys**\nPost the service (`billing-api`), SHA (`a3f9c21`), the Linear ticket, and \"promoting to prod\".\n\n**7. Promote to prod**\n```bash\nacme deploy promote $SVC --env prod --sha $SHA\n```\nThe CLI rolls out us-east-1 as a 10% canary, waits 20 minutes, then continues to full rollout and eu-west-1. Only one prod promotion per service can run at a time. Don't use `--force-unlock` unless the lock holder confirms in #deploys.\n\n**8. Watch the canary**\n```bash\nacme dash canary $SVC\n```\n\n**Rollback triggers.** Roll back immediately, during canary or within 60 minutes of full rollout, if any of these happen:\n- 5xx rate above 1% for 5 minutes\n- p95 latency more than 30% above the 7-day baseline\n- any SEV1 or SEV2 alert on the service\n\n```bash\nacme deploy rollback $SVC --env prod\n```\nRollback redeploys the previous image. It does not revert database migrations.\n\n**9. Close the loop.** Reply \"done\" with the final rollout time in the #deploys thread.\n\n## Before you start\n\n- **Migrations:** if a3f9c21 includes schema changes, they must already be deployed in a separate, earlier release and be backward compatible for one release. Check the commit diff.\n- **Feature flags:** if the change alters risky behavior, confirm the LaunchDarkly flag (project `acme-app`) defaults to off in prod.\n- **Timing:** Prod deploys must start between 09:00 and 16:00 US Eastern on Mon–Thu. The canary wait plus full and EU rollout take well over 20 minutes, and the rollback watch runs 60 minutes past full rollout. If you start late Thursday, that watch will run into Friday, when weekend on-call is a single engineer. Consider starting earlier in the day or waiting until Monday.\n- **Permissions:** prod promotion is limited to on-call or the billing-api service owner. If you're neither, get one of them to run step 7.\n\nIf you want, I can check the status commands for you (CI, dev health, freeze) when you're ready to start. Prod promotion I'd leave to you or your on-call.\n"
+      }
+    ],
+    "baseline": 0,
+    "withSkill": 1,
+    "lift": 1
+  }
+]

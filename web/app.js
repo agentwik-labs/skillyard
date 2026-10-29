@@ -384,6 +384,72 @@ function viewConnect() {
   copyButtons(app);
 }
 
+const CAUGHT = { scan: 'Security scan', validate: 'Format check', eval: 'Lift eval', review: 'Human review' };
+
+function registryLink(p) {
+  const m = /registry\/public\/([a-z0-9-]+)$/.exec(p) || /seed\/orgs\/([a-z0-9-]+)\/skills\/([a-z0-9-]+)$/.exec(p);
+  if (!m) return null;
+  return m[2] ? `#/skill/@${m[1]}/${m[2]}` : `#/skill/@skillyard/${m[1]}`;
+}
+
+function codeBlock(side) {
+  return `<div class="code-lines">${side.lines.map((l) => `<div class="${l.hit ? 'hit' : ''}"><span class="ln">${l.n}</span><span>${esc(l.text) || ' '}</span></div>`).join('')}${side.truncated ? '<div class="more">…</div>' : ''}</div>`;
+}
+
+function verdict(l) {
+  const b = l.bad;
+  const crit = b.scan.filter((f) => f.severity === 'critical');
+  if (crit.length) return ['bad', `Blocked: ${crit[0].message}`];
+  if (b.errors.length) return ['bad', `Rejected: ${b.errors[0]}`];
+  const warn = [...b.warnings, ...b.scan.map((f) => f.message)];
+  if (warn.length) return ['warn', `Warning: ${warn[0]}`];
+  if (l.caughtBy.includes('eval')) return ['quiet', 'Passes every static check. Only measuring catches it.'];
+  return ['quiet', 'Passes every check. Only a human reviewer catches it.'];
+}
+
+async function viewExamples(params) {
+  const data = await (await fetch('examples.json')).json();
+  const kind = params.get('kind') || '';
+  const lessons = data.lessons.filter((l) => !kind || l.kind === kind);
+  const pct = (x) => `${Math.round(x * 100)}%`;
+  app.innerHTML = h`
+    <div class="page-head"><h1>Good skills, bad skills</h1>
+    <p>Twelve skills that look reasonable and aren't, each next to a version that works. Every verdict below is the real output of <code>skillyard validate</code>, <code>skillyard scan</code> or <code>skillyard eval</code>, not a description of what they'd say. The bad ones live in <a href="https://github.com/agentwik-labs/skillyard/tree/main/examples/bad">examples/bad</a> so you can test your own tools on them; don't install them.</p></div>
+    <div class="chips" role="group" aria-label="Filter">
+      ${raw(['', 'security', 'quality'].map((k) => `<button type="button" class="chip ${k === kind ? 'on' : ''}" data-kind="${k}">${k ? k[0].toUpperCase() + k.slice(1) : 'All'} · ${data.lessons.filter((l) => !k || l.kind === k).length}</button>`).join(''))}
+    </div>
+    ${raw(lessons.map((l, i) => {
+      const [vk, vtext] = verdict(l);
+      const link = registryLink(l.good.path);
+      const m = l.measured;
+      return h`<section class="lesson" id="${l.id}">
+        <div class="lesson-head">
+          <span class="lesson-n">${String(i + 1).padStart(2, '0')}</span>
+          <h2>${l.title}</h2>
+          <span class="badge ${l.kind === 'security' ? 'private' : 'public'}">${l.kind}</span>
+          <span class="muted caught">Caught by: ${l.caughtBy.map((c) => CAUGHT[c]).join(', ')}</span>
+        </div>
+        <p class="why">${l.why}</p>
+        <div class="pair">
+          <div class="side bad-side">
+            <div class="side-head"><strong>Bad</strong> <span class="mono">${l.bad.name}/${l.bad.file}</span></div>
+            <div class="verdict ${vk}">${vtext}</div>
+            ${raw(codeBlock(l.bad))}
+            ${raw(l.bad.scan.length + l.bad.warnings.length + l.bad.errors.length > 1 ? `<ul class="findings">${[...l.bad.errors.map((e) => ['error', e]), ...l.bad.scan.map((f) => [f.severity, `${f.file}:${f.line} ${f.message}`]), ...l.bad.warnings.map((w) => ['warning', w])].map(([sev, t]) => `<li><span class="sev ${sev}">${sev}</span> ${esc(t)}</li>`).join('')}</ul>` : '')}
+          </div>
+          <div class="side good-side">
+            <div class="side-head"><strong>Good</strong> <span class="mono">${l.good.name}/${l.good.file}</span>${raw(link ? ` <a href="${link}">open in registry →</a>` : '')}</div>
+            <div class="verdict ok">${l.good.blocked ? 'Check failed' : `Passes: ${l.good.scan.length ? `${l.good.scan.length} warning(s) to review` : 'format check and security scan clean'}`}</div>
+            ${raw(codeBlock(l.good))}
+          </div>
+        </div>
+        ${raw(m ? h`<div class="measured"><strong>Measured</strong> (${m.model}, ${m.runs} runs per condition): no skill ${pct(m.without)} · this bad skill ${pct(m.withBad)}${raw(m.withGood != null ? ` · the good skill ${esc(pct(m.withGood))}` : '')}${raw(m.note ? ` <span class="muted">${esc(m.note)}</span>` : '')}</div>` : '')}
+        <p class="fix"><strong>Fix:</strong> ${l.fix}</p>
+      </section>`;
+    }).join(''))}`;
+  app.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => { location.hash = b.dataset.kind ? `#/examples?kind=${b.dataset.kind}` : '#/examples'; }));
+}
+
 function viewTeams() {
   const tiers = [
     ['Self-host', 'Free', 'Run Skillyard yourself. Private org skills, tokens, scan on publish, MCP, installs for Claude Code, Codex, Cursor and AGENTS.md agents. MIT licensed.', 'Get the code', 'https://github.com/agentwik-labs/skillyard'],
@@ -466,6 +532,7 @@ async function route() {
     else if (pathPart === '/connect') viewConnect();
     else if (pathPart === '/publish') viewPublish();
     else if (pathPart === '/teams') viewTeams();
+    else if (pathPart === '/examples') await viewExamples(params);
     else await viewBrowse(params);
     document.title = `${document.querySelector('main h1')?.textContent?.slice(0, 60) || 'Skillyard'} · Skillyard`;
     if (pathPart === '/') document.title = 'Skillyard';

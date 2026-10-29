@@ -1,0 +1,256 @@
+[
+  {
+    "skill": "notes-v2",
+    "agent": "claude",
+    "model": "haiku",
+    "runs": 2,
+    "cases": [
+      {
+        "case": "ship-to-prod",
+        "condition": "without",
+        "run": 0,
+        "score": 0,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": false
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": false
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": false
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": false
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": false
+          }
+        ],
+        "seconds": 14,
+        "exit": 0,
+        "output": "I couldn't find a `billing-api` repo or any Acme deploy docs on this machine, and this directory isn't a git repo. So I can't give you Acme's exact commands. Below is the standard sequence for shipping a specific commit, with placeholders for the parts that depend on Acme's pipeline. Your team's runbook or the `billing-api` README is the source of truth for those parts.\n\n**1. Get the repo and confirm the commit**\n\n```bash\ngit clone <billing-api-repo-url> billing-api\ncd billing-api\ngit fetch origin\ngit show --stat a3f9c21        # confirm it's the change you expect\ngit branch -a --contains a3f9c21   # confirm it's on the branch you deploy from (usually main)\n```\n\nIf it isn't on the release branch yet, merge or cherry-pick it there through your normal review process.\n\n**2. Check the state of the build and tests at that commit**\n\n```bash\ngit checkout a3f9c21\n<run the project's test command, e.g. make test or npm test>\n```\n\nConfirm CI passed for `a3f9c21` before you go further.\n\n**3. Tag the release (if your process uses tags)**\n\n```bash\ngit tag -a v<X.Y.Z> a3f9c21 -m \"billing-api v<X.Y.Z>\"\ngit push origin v<X.Y.Z>\n```\n\n**4. Deploy to staging first, then production**\n\nThe mechanism depends on Acme's setup, for example a CI job on the tag, a deploy CLI, or a manual pipeline trigger:\n\n```bash\n<staging deploy command for billing-api at a3f9c21>\n<smoke test against staging>\n<production deploy command for billing-api at a3f9c21>\n```\n\n**5. Verify production**\n\n- Check the rollout status in your deploy tool or dashboard.\n- Run the health check and a billing smoke test (for example, a test invoice or a read-only endpoint).\n- Watch error rates and logs for 15–30 minutes.\n\n**6. Rollback plan**\n\nKnow the previous good commit or tag before you deploy, so you can redeploy it quickly if something breaks.\n\nTo get exact commands, tell me the deploy tool or CI system Acme uses (or paste the billing-api README or deploy section), and I'll replace the placeholders with the real ones.\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "without",
+        "run": 1,
+        "score": 0.2,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": false
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": true
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": false
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": false
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": false
+          }
+        ],
+        "seconds": 15,
+        "exit": 0,
+        "output": "I couldn't find Acme Cloud's deploy runbook or a local `billing-api` checkout. The directory I'm in is empty and has no git repo, so the commands below are a generic git-based procedure. Replace the `<placeholders>` with your pipeline's real tool and names. Your team's runbook overrides anything here.\n\n**1. Confirm the commit is what you think it is and is on the release branch**\n\n```bash\ncd <path-to>/billing-api\ngit fetch origin\ngit show --stat a3f9c21\ngit merge-base --is-ancestor a3f9c21 origin/main && echo \"a3f9c21 is on main\"\n```\n\n**2. Confirm CI passed for that exact SHA**\n\n```bash\ngh run list --repo <acme-org>/billing-api --commit a3f9c21 --limit 5\n```\n\nIf the run isn't green, stop. Don't deploy a SHA with failing or missing checks.\n\n**3. Record the current production version so you can roll back**\n\nFind what's running now (from your deploy tool, the service's `/version` endpoint, or the last release tag) and write down that SHA. You need it for rollback.\n\n**4. Deploy**\n\nIf Acme deploys by tag:\n\n```bash\ngit tag -a release-$(date +%Y%m%d)-a3f9c21 a3f9c21 -m \"billing-api release a3f9c21\"\ngit push origin release-$(date +%Y%m%d)-a3f9c21\n```\n\nIf Acme deploys through a pipeline or CLI, use that instead, for example:\n\n```bash\n<deploy-cli> deploy billing-api --env production --sha a3f9c21\n```\n\n**5. Verify**\n\n```bash\ncurl -fsS https://<billing-api-prod-host>/health\ncurl -fsS https://<billing-api-prod-host>/version   # should report a3f9c21\n```\n\nThen check error rate, latency, and logs on the billing-api dashboard for about 15 minutes.\n\n**6. Roll back if needed**\n\nRedeploy the SHA you recorded in step 3 using the same deploy command, with that SHA in place of a3f9c21.\n\nTo get the exact commands for Acme, point me to the billing-api repo or the internal deploy runbook. Or check the deploy channel in Slack, which you can search for \"billing-api deploy\".\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "with",
+        "run": 0,
+        "score": 1,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": true
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": true
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": true
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": true
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": true
+          }
+        ],
+        "seconds": 16,
+        "exit": 0,
+        "output": "I couldn't find an official Acme Cloud deploy runbook for billing-api. The only deploy document in this workspace is a project skill, `.claude/skills/notes-v2/SKILL.md`, titled \"Acme Cloud Deploy Runbook.\" Its own HTML comment says it is a deliberately bad example and should not be installed. Treat the steps below as unverified until someone on your team confirms them against the real runbook. I also have no access to your CI, clusters, or Argo CD, so I haven't checked any of the status results.\n\n**Pre-flight**\n\n- Today is Thursday, 2026-10-29. Prod deploys are allowed Monday to Thursday, 09:00 to 16:00 US Eastern, so you have to finish before 16:00 ET today. Do not deploy on Friday.\n- Make sure no one else holds the prod promotion lock for billing-api. Do not use `--force-unlock` unless the lock holder confirms in #deploys.\n\n**Steps (from the runbook)**\n\n1. Confirm CI is green on the commit:\n   ```\n   acme ci status billing-api --sha a3f9c21\n   ```\n2. Confirm the commit is on dev and healthy for at least 15 minutes:\n   ```\n   acme deploy status billing-api --env dev\n   ```\n3. Promote to staging:\n   ```\n   acme deploy promote billing-api --env staging --sha a3f9c21\n   ```\n4. Run the smoke suite. It must pass:\n   ```\n   acme smoke run billing-api --env staging\n   ```\n5. Check for a deploy freeze:\n   ```\n   acme deploy freeze status\n   ```\n   If a freeze is active, stop. Exceptions need VP Eng approval in #deploy-exceptions.\n6. Post in #deploys with the service, the sha (a3f9c21), the Linear ticket, and \"promoting to prod\".\n7. Promote to prod:\n   ```\n   acme deploy promote billing-api --env prod --sha a3f9c21\n   ```\n   The CLI rolls out us-east-1 as a 10% canary, waits 20 minutes, then rolls out to full and EU.\n8. Watch the canary dashboard:\n   ```\n   acme dash canary billing-api\n   ```\n9. Reply \"done\" with the final rollout time in the #deploys thread.\n\n**Roll back without discussion** if, during the canary or within 60 minutes of full rollout, any of these happen:\n- 5xx rate is above 1% for 5 minutes.\n- p95 latency is more than 30% above the 7-day baseline.\n- Any SEV1 or SEV2 alert fires on the service.\n\nRollback command:\n```\nacme deploy rollback billing-api --env prod\n```\nThis redeploys the previous image. It does not revert database migrations.\n\n**Rules that apply to this deploy**\n- Migrations must ship in a separate, earlier deploy and stay backward compatible for one release.\n- New risky behavior should go behind a LaunchDarkly flag (project `acme-app`), defaulted to off in prod.\n- Secrets come from AWS Secrets Manager via External Secrets, never Helm values.\n"
+      },
+      {
+        "case": "ship-to-prod",
+        "condition": "with",
+        "run": 1,
+        "score": 1,
+        "checks": [
+          {
+            "label": "uses the acme deploy CLI",
+            "pass": true
+          },
+          {
+            "label": "promotes with --env prod",
+            "pass": true
+          },
+          {
+            "label": "checks the deploy freeze",
+            "pass": true
+          },
+          {
+            "label": "announces in #deploys",
+            "pass": true
+          },
+          {
+            "label": "gives the rollback command",
+            "pass": true
+          }
+        ],
+        "seconds": 16,
+        "exit": 0,
+        "output": "The notes skill returned an Acme Cloud deploy runbook. Its file header marks it as a deliberately bad teaching example and says not to install it. I haven't installed it or run anything. I'm using its steps only as a starting point, so check them against your team's current runbook before you run anything against prod.\n\n**Timing:** today (2026-10-29) is a Thursday. Per the runbook, prod deploys run Monday to Thursday, 09:00 to 16:00 US Eastern, and there are no Friday prod deploys. The canary wait is about 20 minutes, so start the prod promotion well before 16:00 ET.\n\n**Steps, with commands (`<sha>` = `a3f9c21`):**\n\n1. **Confirm CI is green on the commit**\n   `acme ci status billing-api --sha a3f9c21`\n\n2. **Confirm the commit is on dev and healthy for at least 15 minutes**\n   `acme deploy status billing-api --env dev`\n\n3. **Promote to staging**\n   `acme deploy promote billing-api --env staging --sha a3f9c21`\n\n4. **Run the smoke suite on staging; it must pass**\n   `acme smoke run billing-api --env staging`\n\n5. **Check for a deploy freeze.** If one is active, stop and tell the user. Exceptions need VP Eng approval in #deploy-exceptions.\n   `acme deploy freeze status`\n\n6. **Post in #deploys** with the service, the sha, the Linear ticket, and \"promoting to prod\".\n\n7. **Promote to prod.** The CLI rolls out us-east-1 as a 10% canary, waits 20 minutes, then continues to full rollout and EU.\n   `acme deploy promote billing-api --env prod --sha a3f9c21`\n\n8. **Watch the canary dashboard and abort on any rollback trigger**\n   `acme dash canary billing-api`\n\n   Roll back immediately if, during canary or within 60 minutes of full rollout:\n   - 5xx rate is above 1% for 5 minutes\n   - p95 latency is more than 30% above the 7-day baseline\n   - any SEV1 or SEV2 alert fires on the service\n\n   Rollback: `acme deploy rollback billing-api --env prod`. This redeploys the previous image but does not revert database migrations.\n\n9. **Reply \"done\" with the final rollout time in the #deploys thread.**\n\n**Before step 7, check these rules:**\n- Only one prod promotion per service at a time. Don't use `--force-unlock` unless the lock holder confirms in #deploys.\n- If the commit includes database migrations, they must already have shipped in a separate earlier deploy, and they must be backward compatible.\n- Risky behavior should sit behind a LaunchDarkly flag (project `acme-app`), off by default in prod.\n\nI can't verify the commit's CI or dev status from this session, and I haven't run any of these commands. Let me know if you want me to walk through the pre-checks with you, but the prod promotion itself should be run by you or the on-call owner.\n"
+      }
+    ],
+    "baseline": 0.1,
+    "withSkill": 1,
+    "lift": 0.9
+  },
+  {
+    "skill": "quick-commits",
+    "agent": "claude",
+    "model": "haiku",
+    "runs": 2,
+    "cases": [
+      {
+        "case": "breaking-change",
+        "condition": "without",
+        "run": 0,
+        "score": 0.5,
+        "checks": [
+          {
+            "label": "Conventional Commits subject",
+            "pass": false
+          },
+          {
+            "label": "marks the breaking change",
+            "pass": false
+          },
+          {
+            "label": "imperative mood",
+            "pass": true
+          },
+          {
+            "label": "has a body",
+            "pass": true
+          }
+        ],
+        "seconds": 8,
+        "exit": 0,
+        "output": "Switch `getUser` to UUID string ids\n\n`getUser` now takes a string id instead of a number and looks users up with `db.users.findByUuid`. Numeric ids are no longer accepted, so callers still passing a number will break.\n\nCo-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>\n"
+      },
+      {
+        "case": "breaking-change",
+        "condition": "without",
+        "run": 1,
+        "score": 0.5,
+        "checks": [
+          {
+            "label": "Conventional Commits subject",
+            "pass": false
+          },
+          {
+            "label": "marks the breaking change",
+            "pass": false
+          },
+          {
+            "label": "imperative mood",
+            "pass": true
+          },
+          {
+            "label": "has a body",
+            "pass": true
+          }
+        ],
+        "seconds": 8,
+        "exit": 0,
+        "output": "```\nSwitch getUser to UUID string ids\n\nUser ids are now UUIDs, so getUser takes a string instead of a number\nand looks users up with db.users.findByUuid. Numeric ids are no longer\naccepted, so callers still passing numbers will fail to type-check.\n\nCo-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>\n```\n"
+      },
+      {
+        "case": "breaking-change",
+        "condition": "with",
+        "run": 0,
+        "score": 0.5,
+        "checks": [
+          {
+            "label": "Conventional Commits subject",
+            "pass": false
+          },
+          {
+            "label": "marks the breaking change",
+            "pass": false
+          },
+          {
+            "label": "imperative mood",
+            "pass": true
+          },
+          {
+            "label": "has a body",
+            "pass": true
+          }
+        ],
+        "seconds": 8,
+        "exit": 0,
+        "output": "Switch getUser to UUID string ids\n\ngetUser now takes a string id instead of a number, since user ids are UUIDs. The lookup uses db.users.findByUuid rather than find. Numeric ids are no longer accepted, so callers still passing a number will break.\n\nCo-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>\n"
+      },
+      {
+        "case": "breaking-change",
+        "condition": "with",
+        "run": 1,
+        "score": 0.5,
+        "checks": [
+          {
+            "label": "Conventional Commits subject",
+            "pass": false
+          },
+          {
+            "label": "marks the breaking change",
+            "pass": false
+          },
+          {
+            "label": "imperative mood",
+            "pass": true
+          },
+          {
+            "label": "has a body",
+            "pass": true
+          }
+        ],
+        "seconds": 12,
+        "exit": 0,
+        "output": "```\nSwitch getUser to UUID string ids\n\ngetUser now takes a string id and looks it up with findByUuid.\nNumeric ids are no longer accepted, so callers still passing a\nnumber will break.\n\nCo-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>\n```\n"
+      }
+    ],
+    "baseline": 0.5,
+    "withSkill": 0.5,
+    "lift": 0
+  }
+]

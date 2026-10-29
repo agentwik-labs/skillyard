@@ -94,7 +94,18 @@ export function validateFiles(files) {
   else if (!NAME_RE.test(fm.name) || fm.name.length > 64) errors.push(`frontmatter: name "${fm.name}" must be lowercase-hyphenated, <= 64 chars`);
   if (!fm.description) errors.push('frontmatter: description is required');
   else if (fm.description.length > 1024) errors.push('frontmatter: description must be <= 1024 chars');
+  else {
+    // The description is the only thing an agent reads before deciding to load a skill.
+    if (fm.description.length < 60 || !/\b(?:use (?:it |this )?(?:when|for|before|after|whenever)|when (?:the user|someone|asked|you)|trigger)/i.test(fm.description)) {
+      warnings.push('description does not say when to use the skill; agents decide to load a skill from its description alone');
+    }
+    if (/\b(?:every|all|any)\s+(?:task|request|prompt|conversation|message)s?\b|\balways (?:load|use|apply) (?:this|it)\b/i.test(fm.description)) {
+      warnings.push('description claims every task; a skill that triggers on everything crowds out the right one');
+    }
+  }
   if (body.trim().length < 50) warnings.push('SKILL.md body is very short');
+  const bodyLines = body.split('\n').length;
+  if (bodyLines > 500) warnings.push(`SKILL.md body is ${bodyLines} lines; long skills cost context on every load, move detail to references/`);
 
   let meta = {};
   if (files['skill.json']) {
@@ -113,8 +124,8 @@ export function validateFiles(files) {
   if (meta.tags && (!Array.isArray(meta.tags) || meta.tags.some((t) => typeof t !== 'string'))) errors.push('tags must be an array of strings');
 
   // Relative links in SKILL.md that point at missing files are a common authoring bug.
-  for (const m of body.matchAll(/(?:\]\(|`)((?:scripts|references|templates|assets)\/[^)`\s]+)/g)) {
-    if (!files[m[1]]) warnings.push(`SKILL.md references ${m[1]}, which is not in the skill`);
+  for (const m of body.matchAll(/(?:^|[\s`(\[])((?:scripts|references|templates|assets)\/[\w./-]*\w)/gm)) {
+    if (!files[m[1]] && !Object.keys(files).some((f) => f.startsWith(`${m[1]}/`))) warnings.push(`SKILL.md references ${m[1]}, which is not in the skill`);
   }
 
   const manifest = {

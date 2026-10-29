@@ -13,7 +13,7 @@ import { installBundle } from './agents.js';
 import { readSkillDir, validateFiles, checksum } from './skill.js';
 
 const RUNNERS = {
-  claude: (prompt, model) => ['claude', ['-p', prompt, '--output-format', 'text', '--allowedTools', 'Read', 'Glob', 'Grep', 'Skill', ...(model ? ['--model', model] : [])]],
+  claude: (prompt, model, tools = ['Read', 'Glob', 'Grep', 'Skill']) => ['claude', ['-p', prompt, '--output-format', 'text', '--allowedTools', ...tools, ...(model ? ['--model', model] : [])]],
   codex: (prompt, model) => ['codex', ['exec', '--skip-git-repo-check', '--sandbox', 'read-only', ...(model ? ['-m', model] : []), prompt]],
 };
 
@@ -53,7 +53,7 @@ function run(cmd, args, cwd, timeoutMs) {
 }
 
 /** Run every case with and without the skill. Returns { skill, agent, model, cases: [...], baseline, withSkill, lift }. */
-export async function evalSkill(skillDir, { agent = 'claude', model, runs = 1, timeoutMs = 240000, log = () => {} } = {}) {
+export async function evalSkill(skillDir, { agent = 'claude', model, tools, runs = 1, timeoutMs = 240000, log = () => {} } = {}) {
   if (!RUNNERS[agent]) throw new Error(`eval supports agents: ${Object.keys(RUNNERS).join(', ')}`);
   const files = readSkillDir(skillDir);
   const v = validateFiles(files);
@@ -75,7 +75,7 @@ export async function evalSkill(skillDir, { agent = 'claude', model, runs = 1, t
           fs.writeFileSync(path.join(cwd, rel), content);
         }
         if (condition === 'with') installBundle(agent === 'codex' ? 'codex' : 'claude', bundle, { cwd });
-        const [cmd, args] = RUNNERS[agent](c.prompt, model);
+        const [cmd, args] = RUNNERS[agent](c.prompt, model, tools);
         const started = Date.now();
         const res = await run(cmd, args, cwd, timeoutMs);
         const checks = grade(res.out, c.checks);
@@ -92,7 +92,7 @@ export async function evalSkill(skillDir, { agent = 'claude', model, runs = 1, t
   };
   const baseline = avg('without');
   const withSkill = avg('with');
-  return { skill: v.manifest.name, agent, model: model || 'default', runs, cases: results, baseline, withSkill, lift: withSkill - baseline };
+  return { skill: v.manifest.name, agent, model: model || 'default', tools: tools || null, runs, cases: results, baseline, withSkill, lift: withSkill - baseline };
 }
 
 export function evalMarkdown(reports) {

@@ -1,0 +1,35 @@
+{
+  "cases": [
+    {
+      "name": "ship-to-prod",
+      "prompt": "I work at Acme Cloud. How do I ship billing-api commit a3f9c21 to production? Give me the exact steps and commands. Answer directly, don't ask me questions.",
+      "checks": [
+        {
+          "type": "contains",
+          "value": "acme deploy promote",
+          "label": "uses the acme deploy CLI"
+        },
+        {
+          "type": "regex",
+          "value": "--env\\s+prod",
+          "label": "promotes with --env prod"
+        },
+        {
+          "type": "regex",
+          "value": "freeze",
+          "label": "checks the deploy freeze"
+        },
+        {
+          "type": "regex",
+          "value": "#deploys",
+          "label": "announces in #deploys"
+        },
+        {
+          "type": "regex",
+          "value": "acme deploy rollback",
+          "label": "gives the rollback command"
+        }
+      ]
+    }
+  ]
+}
