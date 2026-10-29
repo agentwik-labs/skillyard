@@ -78,6 +78,8 @@ function looksBenign(rule, line, file) {
     return quoted || DEFENSIVE_RE.test(line) || file.endsWith('.json');
   }
   if (rule === 'conceal-from-user') return DEFENSIVE_RE.test(line);
+  // Printing install instructions ("install with: curl … | sh") is not running them.
+  if (rule === 'pipe-to-shell') return /\b(?:echo|printf|print|console\.(?:log|error)|puts|Write-Host)\b[^\n]*["'`][^"'`]*\bcurl\b/.test(line);
   if (rule === 'env-exfil') return /\b(?:localhost|127\.0\.0\.1)\b/.test(line) || (!/\.(?:sh|bash|zsh)$/.test(file) && !/os\.environ|process\.env/.test(line));
   return false;
 }
