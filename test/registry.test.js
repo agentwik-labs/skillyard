@@ -221,3 +221,16 @@ test('good-vs-bad gallery: every bad example is caught the way the catalog says'
     assert.ok(good.v.ok && good.s.critical === 0, `${l.id}: good version should pass`);
   }
 });
+
+test('starter kit skills are valid and pass the scan', () => {
+  const root = path.join(import.meta.dirname, '..', 'starter-kit', 'skills');
+  for (const d of fs.readdirSync(root)) {
+    const files = {};
+    const walk = (a, r) => fs.readdirSync(a, { withFileTypes: true }).forEach((e) => (e.isDirectory() ? walk(path.join(a, e.name), `${r}${e.name}/`) : (files[r + e.name] = fs.readFileSync(path.join(a, e.name)))));
+    walk(path.join(root, d), '');
+    const v = validateFiles(files);
+    assert.ok(v.ok, `${d}: ${v.errors.join('; ')}`);
+    assert.ok(v.warnings.some((w) => w.includes('TODO')), `${d}: kit skills should flag their TODOs`);
+    assert.equal(scanFiles(files).critical, 0);
+  }
+});

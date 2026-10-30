@@ -76,6 +76,16 @@ skillyard connect vscode | gemini | claude-desktop
 
 See [docs/agents.md](docs/agents.md) for where each agent reads skills and how each config looks.
 
+## Roll it out to your team
+
+```sh
+npx -y https://github.com/agentwik-labs/skillyard/archive/refs/heads/main.tar.gz kit .
+```
+
+Copies the [team starter kit](starter-kit/README.md) into your repo: a two-week plan, a 30-minute kickoff agenda,
+a skill review checklist, fill-in `data-handling` and `definition-of-done` skills with evals, a new-skill template,
+and a CI check. No server needed: `skillyard install ./skills/* --agent all` installs straight from the folder.
+
 ## Run it for a company
 
 ```sh

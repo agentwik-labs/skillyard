@@ -1,0 +1,13 @@
+{
+  "name": "TODO-skill-name",
+  "version": "0.1.0",
+  "title": "TODO Title",
+  "summary": "TODO one sentence",
+  "category": "engineering",
+  "tags": [
+    "todo"
+  ],
+  "license": "Proprietary",
+  "author": "TODO your team",
+  "visibility": "private"
+}

@@ -104,6 +104,8 @@ export function validateFiles(files) {
     }
   }
   if (body.trim().length < 50) warnings.push('SKILL.md body is very short');
+  const todos = (files['SKILL.md'].toString('utf8').match(/\bTODO\b/g) || []).length;
+  if (todos) warnings.push(`SKILL.md still has ${todos} TODO placeholder(s)`);
   const bodyLines = body.split('\n').length;
   if (bodyLines > 500) warnings.push(`SKILL.md body is ${bodyLines} lines; long skills cost context on every load, move detail to references/`);
 

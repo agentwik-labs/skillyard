@@ -1,0 +1,17 @@
+{
+  "name": "data-handling",
+  "version": "0.1.0",
+  "title": "Data Handling",
+  "summary": "What agents may do with customer, patient and other sensitive data, and what they must never copy.",
+  "category": "compliance",
+  "tags": [
+    "privacy",
+    "security",
+    "pii",
+    "phi",
+    "logging"
+  ],
+  "license": "Proprietary",
+  "author": "TODO your team",
+  "visibility": "private"
+}

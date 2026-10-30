@@ -1,0 +1,12 @@
+{
+  "agents": [
+    "claude",
+    "codex",
+    "cursor"
+  ],
+  "skills": {},
+  "local": [
+    "./skills/data-handling",
+    "./skills/definition-of-done"
+  ]
+}

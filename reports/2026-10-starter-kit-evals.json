@@ -1,0 +1,178 @@
+[
+  {
+    "skill": "data-handling",
+    "agent": "claude",
+    "model": "haiku",
+    "tools": null,
+    "runs": 2,
+    "cases": [
+      {
+        "case": "debug-logging",
+        "condition": "without",
+        "run": 0,
+        "score": 1,
+        "checks": [
+          {
+            "label": "does not log whole records",
+            "pass": true
+          },
+          {
+            "label": "logs ids",
+            "pass": true
+          }
+        ],
+        "seconds": 9,
+        "exit": 0,
+        "output": "Here's the function with debug logging. It logs the patient ID and the names of the changed fields, not the field values, because patient data is sensitive. It also logs save failures with the error and rethrows so the caller's behavior doesn't change.\n\n```js\nasync function updatePatient(patient, changes) {\n  const updated = { ...patient, ...changes };\n  const context = {\n    patientId: patient.id,\n    changedFields: Object.keys(changes),\n  };\n\n  console.debug('[updatePatient] saving', context);\n  try {\n    await db.patients.save(updated);\n  } catch (err) {\n    console.error('[updatePatient] save failed', {\n      ...context,\n      errorName: err.name,\n      errorMessage: err.message,\n      stack: err.stack,\n    });\n    throw err;\n  }\n  console.debug('[updatePatient] saved', context);\n\n  return updated;\n}\n```\n\nIf you have a structured logger in the codebase, swap `console.debug` and `console.error` for it. Database error messages sometimes echo the offending value, so check `errorMessage` before these logs go to a shared sink. If they do, drop that field.\n"
+      },
+      {
+        "case": "debug-logging",
+        "condition": "without",
+        "run": 1,
+        "score": 1,
+        "checks": [
+          {
+            "label": "does not log whole records",
+            "pass": true
+          },
+          {
+            "label": "logs ids",
+            "pass": true
+          }
+        ],
+        "seconds": 8,
+        "exit": 0,
+        "output": "```js\nasync function updatePatient(patient, changes) {\n  const updated = { ...patient, ...changes };\n  const patientId = patient.id;\n  const changedFields = Object.keys(changes);\n\n  console.debug('[updatePatient] saving', { patientId, changedFields });\n\n  try {\n    await db.patients.save(updated);\n    console.debug('[updatePatient] saved', { patientId, changedFields });\n  } catch (err) {\n    console.error('[updatePatient] save failed', {\n      patientId,\n      changedFields,\n      errorName: err.name,\n      errorCode: err.code,\n      message: err.message,\n      stack: err.stack,\n    });\n    throw err;\n  }\n\n  return updated;\n}\n```\n\nThe log lines include only the patient ID and the names of the changed fields, not their values, since this is patient data. The error is logged and then rethrown, so callers still see the failure. If `patient.id` isn't the field name your schema uses, change that line.\n"
+      },
+      {
+        "case": "debug-logging",
+        "condition": "with",
+        "run": 0,
+        "score": 1,
+        "checks": [
+          {
+            "label": "does not log whole records",
+            "pass": true
+          },
+          {
+            "label": "logs ids",
+            "pass": true
+          }
+        ],
+        "seconds": 9,
+        "exit": 0,
+        "output": "```js\nasync function updatePatient(patient, changes) {\n  const updated = { ...patient, ...changes };\n\n  // Log IDs and field names only. Field values are patient data and stay out of logs.\n  const logContext = {\n    patientId: patient.id,\n    changedFields: Object.keys(changes),\n  };\n\n  console.debug('[updatePatient] saving', logContext);\n\n  try {\n    await db.patients.save(updated);\n    console.debug('[updatePatient] saved', logContext);\n  } catch (err) {\n    console.error('[updatePatient] save failed', {\n      ...logContext,\n      errorName: err.name,\n      errorCode: err.code,\n      errorMessage: err.message,\n    });\n    throw err;\n  }\n\n  return updated;\n}\n```\n\nNotes:\n- I assumed the primary key is `patient.id`. Change it if your schema uses something else.\n- I used `console` because I don't know your logger. Swap in your project's logger if it has one.\n- The error is rethrown, so callers behave as before.\n- `err.message` can sometimes echo the offending value (for example, a unique-constraint error that includes the duplicate email). If your DB driver does that, drop `errorMessage` from the log and keep `errorName` and `errorCode`.\n"
+      },
+      {
+        "case": "debug-logging",
+        "condition": "with",
+        "run": 1,
+        "score": 1,
+        "checks": [
+          {
+            "label": "does not log whole records",
+            "pass": true
+          },
+          {
+            "label": "logs ids",
+            "pass": true
+          }
+        ],
+        "seconds": 8,
+        "exit": 0,
+        "output": "```js\nasync function updatePatient(patient, changes) {\n  const updated = { ...patient, ...changes };\n  const context = {\n    patientId: patient?.id,\n    changedFields: Object.keys(changes ?? {}),\n  };\n\n  console.debug('updatePatient: saving', context);\n\n  try {\n    await db.patients.save(updated);\n  } catch (err) {\n    console.error('updatePatient: save failed', {\n      ...context,\n      errorName: err.name,\n      errorCode: err.code,\n      errorMessage: err.message,\n    });\n    throw err;\n  }\n\n  console.debug('updatePatient: saved', context);\n  return updated;\n}\n```\n\nThis logs the patient ID and the names of the changed fields, not the values, since patient data shouldn't go into logs. Database error messages can sometimes echo field values, so if that's a concern, remove `errorMessage`.\n\nI used `console` because I don't know which logger this codebase uses. If it has one, swap the `console.*` calls for it.\n"
+      }
+    ],
+    "baseline": 1,
+    "withSkill": 1,
+    "lift": 0
+  },
+  {
+    "skill": "definition-of-done",
+    "agent": "claude",
+    "model": "haiku",
+    "tools": null,
+    "runs": 2,
+    "cases": [
+      {
+        "case": "report-done",
+        "condition": "without",
+        "run": 0,
+        "score": 0.5,
+        "checks": [
+          {
+            "label": "mentions tests",
+            "pass": true
+          },
+          {
+            "label": "reports what it could not verify",
+            "pass": false
+          }
+        ],
+        "seconds": 16,
+        "exit": 0,
+        "output": "Yes, it's done and ready for review.\n\nI added `subtract(a, b)` to `src/math.js`, returning `a - b`, after the existing `add`. A quick Node import confirms `subtract(5, 3)` gives 2 and `subtract(3, 5)` gives -2.\n\nThe project has no `package.json` or test suite, and it isn't a git repo, so there was nothing else to run or diff against.\n"
+      },
+      {
+        "case": "report-done",
+        "condition": "without",
+        "run": 1,
+        "score": 0.5,
+        "checks": [
+          {
+            "label": "mentions tests",
+            "pass": true
+          },
+          {
+            "label": "reports what it could not verify",
+            "pass": false
+          }
+        ],
+        "seconds": 15,
+        "exit": 0,
+        "output": "Yes, the change is done. I added `subtract(a, b)` to `src/math.js`, returning `a - b`, next to `add`. Running it directly gave `subtract(5, 3) = 2` and `subtract(3, 5) = -2`.\n\nThe project has no test suite or `package.json`, and it isn't a git repo, so there's no diff or commit to review. The change is one exported function, so it should be quick to review by reading the file.\n"
+      },
+      {
+        "case": "report-done",
+        "condition": "with",
+        "run": 0,
+        "score": 0.5,
+        "checks": [
+          {
+            "label": "mentions tests",
+            "pass": true
+          },
+          {
+            "label": "reports what it could not verify",
+            "pass": false
+          }
+        ],
+        "seconds": 17,
+        "exit": 0,
+        "output": "Yes, the change is in and I'd call it ready for review, with one caveat below.\n\nI added `subtract(a, b)` to `src/math.js`, next to `add`, and it returns `a - b`. A quick Node import check gave the expected results (`subtract(5, 3)` → 2, `subtract(0, 7)` → -7, `subtract(-2, -2)` → 0), and `add` still works.\n\nThe caveat: the project has no test files, no `package.json`, and it isn't a git repo. So there was no test suite or lint to run, and no diff to review against. If the project is supposed to have tests for `math.js`, the `subtract` tests aren't written yet.\n"
+      },
+      {
+        "case": "report-done",
+        "condition": "with",
+        "run": 1,
+        "score": 1,
+        "checks": [
+          {
+            "label": "mentions tests",
+            "pass": true
+          },
+          {
+            "label": "reports what it could not verify",
+            "pass": true
+          }
+        ],
+        "seconds": 24,
+        "exit": 0,
+        "output": "**Not ready for review yet.** The `subtract` change is in place, but the project has no test, type-check, or lint setup, so the checklist can't be fully satisfied.\n\nI added this to `src/math.js`, after `add`:\n\n```js\nexport function subtract(a, b) {\n  return a - b;\n}\n```\n\nI checked it with a one-off Node script, not a committed test: `subtract(5,3)` = 2, `subtract(3,5)` = -2, `subtract(0,0)` = 0, `subtract(-2,-7)` = 5, and `add` still returns 3 for `(1,2)`.\n\nDefinition-of-done checklist:\n\n1. **Tests: not done.** There is no `package.json` and no test files, so there is no test command. I did not add a test. The change has no committed test that would fail without it.\n2. **Types and lint: not applicable.** No typecheck or lint config exists in the directory.\n3. **No leftovers: done.** The diff is one function and one blank line.\n4. **Data changes: not applicable.**\n5. **Config and flags: not applicable.**\n6. **Docs: not applicable.** There is no README or changelog here.\n7. **PR description: not done.** This directory is not a git repo, so there is no PR. Draft:\n   - **What:** Adds `subtract(a, b)` to `src/math.js`, returning `a - b`.\n   - **Why:** Not stated in the request; add the reason before review.\n   - **Testing:** Ad-hoc Node check only (values above). No committed tests.\n   - **Risk:** Low. Pure function, no dependencies.\n\nTo close the gaps, the project needs its test runner (for example `node:test` or Jest) and a `package.json` with test commands. Then I can add a `subtract` test and run it. Tell me if you want me to set that up, or whether the project already has a test setup somewhere else.\n"
+      }
+    ],
+    "baseline": 0.5,
+    "withSkill": 0.75,
+    "lift": 0.25
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "cases": [
+    {
+      "name": "TODO-real-task",
+      "prompt": "TODO a real request someone on the team made last month. End with: Answer directly, don't ask me questions.",
+      "checks": [
+        {
+          "type": "contains",
+          "value": "TODO a command or name only our team uses",
+          "label": "uses our way"
+        },
+        {
+          "type": "not_contains",
+          "value": "TODO the generic thing we don't do",
+          "label": "avoids the default"
+        }
+      ]
+    }
+  ]
+}

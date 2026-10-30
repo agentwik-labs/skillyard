@@ -12,7 +12,7 @@ import { AGENTS, detectAgents, installBundle, listInstalled, resolveAgents, unin
 import { loadConfig, RemoteRegistry, saveConfig } from './client.js';
 import { scanFiles } from './scan.js';
 import { evalSkill, evalMarkdown } from './eval.js';
-import { parseSkillRef, readSkillDir, titleCase, validateFiles, NAME_RE } from './skill.js';
+import { checksum, parseSkillRef, readSkillDir, titleCase, validateFiles, NAME_RE } from './skill.js';
 
 const BIN = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'skillyard.js');
 const REPO_ROOT = path.resolve(path.dirname(BIN), '..');
@@ -23,7 +23,8 @@ const HELP = `skillyard — a skill registry for AI agents (Claude Code, Codex, 
 Using skills
   search [query] [--scope org] [--category c]   Find skills
   info <skill>                                   Show a skill's details and instructions
-  install <skill...> [--agent a,b|all] [-g]      Install into agents (default: detected agents, else claude)
+  install <skill...> [--agent a,b|all] [-g]      Install into agents (default: detected agents, else claude);
+                                                 a skill can also be a local folder: ./skills/deploy
                      [--save] [--force]          --save records it in ./skills.json
   uninstall <name...> [--agent a,b|all] [-g]     Remove installed skills
   list [--agent a,b|all] [-g]                    Show installed skills
@@ -42,6 +43,8 @@ Account
 
 Authoring
   new <name> [--dir .]                           Scaffold a new skill
+  kit [dir] [--force]                            Copy the team starter kit (guide, session, review checklist,
+                                                 data-handling + definition-of-done skills, CI) into a repo
   validate <dir...>                              Check skill directories (or folders of them)
   scan <dir...> [--json out.json] [--all]        Security-scan every skill found under the given folders
   eval <dir...> [--agent claude|codex] [--model m] [--runs n] [--tools Skill,Read] [--out report.md]
@@ -66,7 +69,7 @@ export async function main(argv) {
   const cmd = args.shift();
   const cmds = {
     serve, seed, org, token, login, whoami, search, info, install, uninstall: uninstallCmd, list, update, init, sync,
-    new: scaffold, validate, scan: scanCmd, eval: evalCmd, publish, connect, mcp, export: exportCmd,
+    new: scaffold, kit, validate, scan: scanCmd, eval: evalCmd, publish, connect, mcp, export: exportCmd,
   };
   if (!cmd || cmd === 'help' || flags.help) return void process.stdout.write(HELP);
   if (cmd === '--version' || cmd === 'version') return void console.log('0.1.0');
@@ -236,6 +239,11 @@ async function install(args, f) {
   const agents = pickAgents(f);
   const reg = registry();
   for (const r of args) {
+    if (isLocalSkill(r)) {
+      const b = localBundle(r);
+      for (const a of agents) console.log(`installed ${b.name}@${b.version} (local) for ${AGENTS[a].label} → ${tilde(installBundle(a, b, { global: !!f.global, force: !!f.force }))}`);
+      continue;
+    }
     const ref = mustRef(r);
     const b = await reg.bundle(ref.scope, ref.name, ref.version);
     for (const a of agents) {
@@ -248,6 +256,45 @@ async function install(args, f) {
       writeManifest(m);
     }
   }
+}
+
+const isLocalSkill = (p) => /^[./~]/.test(p) && fs.existsSync(path.join(p, 'SKILL.md'));
+
+/** Build an install bundle from a skill folder on disk (validated and scanned like a publish). */
+function localBundle(dir) {
+  const files = readSkillDir(dir);
+  for (const k of Object.keys(files)) if (k.startsWith('evals/')) delete files[k];
+  const v = validateFiles(files);
+  const s = scanFiles(files);
+  if (!v.ok) throw new Error(`${dir}: ${v.errors.join('; ')}`);
+  if (s.critical) throw new Error(`${dir}: security scan blocked install: ${s.findings.filter((x) => x.severity === 'critical').map((x) => `${x.file}:${x.line} ${x.message}`).join('; ')}`);
+  const scope = 'local';
+  return {
+    id: `@${scope}/${v.manifest.name}`, scope, name: v.manifest.name, version: v.manifest.version, checksum: checksum(files),
+    files: Object.fromEntries(Object.entries(files).map(([k, b]) => [k, b.toString('base64')])),
+  };
+}
+
+async function kit(args, f) {
+  const dest = path.resolve(args[0] || '.');
+  const src = path.join(REPO_ROOT, 'starter-kit');
+  const copied = [];
+  const skipped = [];
+  const walk = (rel) => {
+    for (const e of fs.readdirSync(path.join(src, rel), { withFileTypes: true })) {
+      const r = rel ? path.join(rel, e.name) : e.name;
+      if (e.isDirectory()) { walk(r); continue; }
+      const target = path.join(dest, r === 'README.md' ? 'SKILLS-README.md' : r);
+      if (fs.existsSync(target) && !f.force) { skipped.push(r); continue; }
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.copyFileSync(path.join(src, r), target);
+      copied.push(path.relative(process.cwd(), target) || target);
+    }
+  };
+  walk('');
+  console.log(`copied ${copied.length} file(s):\n  ${copied.join('\n  ')}`);
+  if (skipped.length) console.log(`kept your existing ${skipped.join(', ')} (use --force to overwrite)`);
+  console.log('\nnext: read SKILLS-README.md, run the kickoff in SESSION.md, fill the TODOs in skills/data-handling');
 }
 
 async function uninstallCmd(args, f) {
@@ -321,8 +368,16 @@ async function sync(_args, f) {
       console.log(`installed ${b.id}@${b.version} for ${AGENTS[a].label}`);
     }
   }
+  for (const dir of m.local || []) {
+    const b = localBundle(dir);
+    for (const a of agents) {
+      if (listInstalled(a).find((x) => x.id === b.id)?.checksum === b.checksum) continue;
+      installBundle(a, b, { force: !!f.force });
+      console.log(`installed ${b.name}@${b.version} (local) for ${AGENTS[a].label}`);
+    }
+  }
   if (agents.includes('agents')) writeAgentsIndex(process.cwd());
-  console.log(`synced ${Object.keys(m.skills || {}).length} skill(s) for ${agents.join(', ')}`);
+  console.log(`synced ${Object.keys(m.skills || {}).length + (m.local || []).length} skill(s) for ${agents.join(", ")}`);
 }
 
 // ---- MCP --------------------------------------------------------------------
