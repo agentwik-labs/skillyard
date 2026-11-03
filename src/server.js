@@ -186,6 +186,6 @@ function serveStatic(pathname, res) {
   const rel = pathname === '/' ? 'index.html' : safeRelPath(decodeURIComponent(pathname.slice(1)));
   let file = rel && path.join(WEB_DIR, rel);
   if (!file || !fs.existsSync(file) || !fs.statSync(file).isFile()) file = path.join(WEB_DIR, 'index.html'); // SPA fallback
-  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'");
+  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; font-src https://fonts.gstatic.com https://cdn.fontshare.com; connect-src 'self'");
   send(res, 200, fs.readFileSync(file), MIME[path.extname(file)] || 'application/octet-stream');
 }
