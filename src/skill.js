@@ -88,7 +88,13 @@ export function validateFiles(files) {
     return { ok: false, errors, warnings, manifest: null };
   }
   const { data, body } = parseFrontmatter(files['SKILL.md'].toString('utf8'));
-  if (!data) errors.push('SKILL.md has no YAML frontmatter');
+  if (!data) {
+    // A license header or comment above the --- block is common, and agents then read that line as the description.
+    const md = files['SKILL.md'].toString('utf8');
+    errors.push(/\n---\r?\n[\s\S]*?\bname:/.test(md)
+      ? 'frontmatter must start on the first line: text above the --- block (often a license header) becomes the description agents see; move it inside the frontmatter as # comments'
+      : 'SKILL.md has no YAML frontmatter');
+  }
   const fm = data || {};
   if (!fm.name) errors.push('frontmatter: name is required');
   else if (!NAME_RE.test(fm.name) || fm.name.length > 64) errors.push(`frontmatter: name "${fm.name}" must be lowercase-hyphenated, <= 64 chars`);
