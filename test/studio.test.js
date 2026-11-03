@@ -96,3 +96,32 @@ test('agent account failures are errors, never graded answers', async () => {
   assert.match(agentFailure(2, '', 'boom'), /exited with code 2/);
   assert.equal(agentFailure(0, 'Here is the plan: pnpm --filter web test'), null);
 });
+
+test('library search ranks by stemmed keywords and approval can install a found skill', async () => {
+  const { keywordCandidates } = await import('../src/studio/finder.js');
+  const lib = { skills: [
+    { id: '@community/verification-before-completion', name: 'verification-before-completion', title: 'Verification before completion', tags: [], summary: 'Run the check before claiming done', description: 'Use before saying work is complete or fixed' },
+    { id: '@community/copywriting', name: 'copywriting', title: 'Copywriting', tags: ['marketing'], summary: 'Write landing copy', description: 'Use for marketing pages' },
+  ] };
+  const c = keywordCandidates(lib, { title: 'Claims it works without verifying', problem: 'Declares done before checking', skill: 'verify-first' });
+  assert.equal(c[0].id, '@community/verification-before-completion');
+  assert.ok(!c.some((x) => x.id === '@community/copywriting'));
+
+  seedDemo({ reset: true });
+  const st = engine.loadState();
+  const mk = (name) => {
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'skillyard-found-'));
+    fs.writeFileSync(path.join(d, 'SKILL.md'), `---\nname: ${name}\ndescription: Runs the real check before claiming work is done. Use before saying it works, is fixed, or is ready.\nlicense: MIT\n---\n\n# ${name}\n\nRun it, read the output, then report.\n`);
+    return d;
+  };
+  const draftDir = mk('verify-first');
+  const altDir = mk('verification-before-completion');
+  st.proposals.unshift({ id: 'def456', title: 't', skill: 'verify-first', kind: 'new', status: 'pending', after: fs.readFileSync(path.join(draftDir, 'SKILL.md'), 'utf8'), draftDir, checks: { blocked: false }, evidence: [],
+    alternatives: [{ id: '@community/verification-before-completion', name: 'verification-before-completion', dir: altDir, skillMd: fs.readFileSync(path.join(altDir, 'SKILL.md'), 'utf8') }] });
+  engine.saveState(st);
+  assert.throws(() => engine.decide('def456', 'approve', { agents: ['claude'], choice: '@community/nope' }), /unknown option/);
+  const p = engine.decide('def456', 'approve', { agents: ['claude'], choice: '@community/verification-before-completion' });
+  assert.equal(p.chosen, '@community/verification-before-completion');
+  assert.match(p.installed[0].dir, /verification-before-completion$/);
+  assert.ok(engine.stats().proposals.find((x) => x.id === 'def456').impact, 'approved proposals carry an impact block');
+});

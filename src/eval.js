@@ -75,7 +75,7 @@ function run(cmd, args, cwd, timeoutMs) {
 }
 
 /** Run every case with and without the skill. Returns { skill, agent, model, cases: [...], baseline, withSkill, lift }. */
-export async function evalSkill(skillDir, { agent = 'claude', model, tools, baselineDir, cases: casesOverride, runs = 1, timeoutMs = 240000, log = () => {} } = {}) {
+export async function evalSkill(skillDir, { agent = 'claude', model, tools, baselineDir, cases: casesOverride, conditions = ['without', 'with'], runs = 1, timeoutMs = 240000, log = () => {} } = {}) {
   if (!RUNNERS[agent]) throw new Error(`eval supports agents: ${Object.keys(RUNNERS).join(', ')}`);
   const files = readSkillDir(skillDir);
   const v = validateFiles(files);
@@ -94,7 +94,7 @@ export async function evalSkill(skillDir, { agent = 'claude', model, tools, base
   const baselineBundle = baselineDir ? toBundle(readSkillDir(baselineDir), v.manifest.name, 'current') : null;
   const results = [];
   for (const c of cases) {
-    for (const condition of ['without', 'with']) {
+    for (const condition of conditions) {
       for (let r = 0; r < runs; r++) {
         const cwd = fs.mkdtempSync(path.join(os.tmpdir(), `skillyard-eval-${v.manifest.name}-`));
         for (const [rel, content] of Object.entries(c.files || {})) {
@@ -128,9 +128,10 @@ export async function evalSkill(skillDir, { agent = 'claude', model, tools, base
     if (!xs.length) throw new Error(`no ${cond}-skill run completed: ${results.find((x) => x.error)?.error || 'unknown error'}`);
     return xs.reduce((a, b) => a + b, 0) / xs.length;
   };
-  const baseline = avg('without');
+  // A found skill is tested against a baseline that was already measured, so it may run only the "with" side.
+  const baseline = conditions.includes('without') ? avg('without') : null;
   const withSkill = avg('with');
-  return { skill: v.manifest.name, agent, model: model || 'default', tools: tools || null, runs, cases: results, baseline, withSkill, lift: withSkill - baseline };
+  return { skill: v.manifest.name, agent, model: model || 'default', tools: tools || null, runs, cases: results, baseline, withSkill, lift: baseline == null ? null : withSkill - baseline };
 }
 
 export function evalMarkdown(reports) {

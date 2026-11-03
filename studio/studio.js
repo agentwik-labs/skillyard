@@ -334,16 +334,43 @@ const NOISE = 0.17;
 function liftClass(l) { return l == null || Math.abs(l) <= NOISE ? 'flat' : l > 0 ? '' : 'down'; }
 
 function itemRow(p) {
-  const l = p.eval?.lift;
+  const bestAlt = (p.alternatives || []).filter((a) => a.eval).sort((a, b) => b.eval.candidate - a.eval.candidate)[0];
+  const l = p.eval ? Math.max(p.eval.lift, bestAlt ? bestAlt.eval.candidate - p.eval.baseline : -Infinity) : null;
   return `<button type="button" class="item ${p.id === selected ? 'on' : ''}" data-pid="${esc(p.id)}">
     <div class="k"><span>${p.kind === 'improve' ? 'Improve' : 'New skill'} · <span class="mono">${esc(p.skill)}</span></span>
     ${l == null ? '<span class="pill">Untested</span>' : `<span class="pill ${l > NOISE ? 'pos' : l < -NOISE ? 'neg' : ''}">${Math.abs(l) <= NOISE ? 'Within noise' : esc(signedPts(l))}</span>`}</div>
     <div class="t">${esc(p.title)}</div>
-    <div class="m"><span>${nf.format(p.evidence.length)} correction${p.evidence.length === 1 ? '' : 's'}</span><span>·</span><span>${esc(ago(p.createdAt))}</span></div>
+    <div class="m"><span>${nf.format(p.evidence.length)} correction${p.evidence.length === 1 ? '' : 's'}</span>${p.alternatives?.length ? `<span>·</span><span>${p.alternatives.length} found</span>` : ''}<span>·</span><span>${esc(ago(p.createdAt))}</span></div>
   </button>`;
 }
 
 let detailTab = 'change';
+const choices = {}; // proposal id -> 'draft' or a library skill id
+
+function defaultChoice(p) {
+  const best = (p.alternatives || []).filter((a) => a.eval).sort((a, b) => b.eval.candidate - a.eval.candidate)[0];
+  // Prefer a maintained library skill only when it clearly beats the draft.
+  return best && p.eval && best.eval.candidate > p.eval.candidate + NOISE ? best.id : 'draft';
+}
+
+function optionsHtml(p) {
+  const alts = p.alternatives || [];
+  if (!p.searchedAt && !alts.length) return '';
+  const chosen = choices[p.id] || defaultChoice(p);
+  const base = p.eval?.baseline;
+  const row = (id, title, sub, score) => {
+    const lift = score != null && base != null ? score - base : null;
+    return `<label class="opt ${chosen === id ? 'on' : ''}"><input type="radio" name="choice" value="${esc(id)}" ${chosen === id ? 'checked' : ''} ${p.status !== 'pending' ? 'disabled' : ''}>
+      <span class="opt-main"><b>${title}</b><span class="muted">${sub}</span></span>
+      <span class="opt-score num">${score == null ? '<span class="dash">—</span>' : pct(score)}</span>
+      <span>${lift == null ? '' : `<span class="pill ${lift > NOISE ? 'pos' : lift < -NOISE ? 'neg' : ''}">${Math.abs(lift) <= NOISE ? 'Within noise' : esc(signedPts(lift))}</span>`}</span></label>`;
+  };
+  return `<div class="section-head"><h2>Options</h2><span class="meta">${alts.length ? `${alts.length} found in the library` : `nothing in the library fits (${nf.format(p.searched?.candidates || 0)} checked)`}</span></div>
+  <div class="options" id="options">
+    ${row('draft', `Drafted for you <span class="mono">${esc(p.skill)}</span>`, 'Written from your corrections', p.eval?.candidate)}
+    ${alts.map((a) => row(a.id, `Found <span class="mono">${esc(a.id)}</span>`, `${esc(a.reason || a.description || '').slice(0, 160)} · ${esc(a.license || 'licence unknown')}${a.source ? ` · <a href="${esc(a.source.repo)}" target="_blank" rel="noopener noreferrer">${esc(a.source.repo.replace('https://github.com/', ''))}</a>` : ''}`, a.eval?.candidate)).join('')}
+  </div>`;
+}
 let editing = false;
 
 async function renderDetail(p) {
@@ -372,6 +399,7 @@ async function renderDetail(p) {
       <div class="lift ${liftClass(e?.lift)}"><div class="label">Lift</div><b>${e ? esc(signedPts(e.lift)) : '<span class="dash">—</span>'}</b></div>
       <div class="why">${verdictWhy}${e ? ` <span class="muted">Answers by ${esc(e.model)}, graded by ${esc(e.judge || 'haiku')}; ${e.cases.length} case${e.cases.length === 1 ? '' : 's'}, ${e.runs} run${e.runs === 1 ? '' : 's'} each.</span>` : ''}</div>
     </div>
+    ${optionsHtml(p)}
     <div class="section-head"><h2>Why: your corrections</h2><span class="meta">${nf.format(p.evidence.length)} found</span></div>
     <div class="evidence">${groupEvidence(p.evidence).slice(0, 4).map((c) => `<div class="ev">
       <div><div class="label"><span>You asked</span><span class="mono">${esc(c.project)}</span></div>${esc(c.asked) || '<span class="dash">—</span>'}</div>
@@ -385,13 +413,17 @@ async function renderDetail(p) {
   const dt = document.getElementById('dt');
   const showTab = () => {
     el.querySelectorAll('[data-dt]').forEach((b) => b.classList.toggle('on', b.dataset.dt === detailTab));
-    if (detailTab === 'change') dt.innerHTML = editing && p.status === 'pending'
+    const chosen = choices[p.id] || defaultChoice(p);
+    const alt = (p.alternatives || []).find((a) => a.id === chosen);
+    if (detailTab === 'change' && alt) dt.innerHTML = `<p class="muted" style="font-size:13px;margin-top:0">Installs <span class="mono">${esc(alt.id)}</span> as published${alt.source ? `, from <a href="${esc(alt.source.repo)}/tree/${esc(alt.source.commit)}/${esc(alt.source.path)}" target="_blank" rel="noopener noreferrer">its source</a>` : ''}. Licence: ${esc(alt.license || 'unknown')}.</p><div class="diff">${alt.skillMd.split('\n').map((t) => `<div class="add" data-op="+">${esc(t) || ' '}</div>`).join('')}</div>`;
+    else if (detailTab === 'change') dt.innerHTML = editing && p.status === 'pending'
       ? `<textarea class="editor" id="editor" spellcheck="false" aria-label="Edit SKILL.md">${esc(p.after)}</textarea><p class="muted" style="font-size:13px">Your edit is checked again (format and security scan) when you approve. Edited versions are not re-tested.</p>`
       : `<div class="diff">${diffHtml}</div>`;
-    else if (detailTab === 'tests') dt.innerHTML = e ? e.cases.map(caseHtml).join('') : '<p class="muted">No tests ran for this draft.</p>';
+    else if (detailTab === 'tests') dt.innerHTML = e ? e.cases.map((c) => caseHtml(c, alt)).join('') : '<p class="muted">No tests ran for this draft.</p>';
     else dt.innerHTML = checksHtml(p.checks);
   };
   el.querySelectorAll('[data-dt]').forEach((b) => b.addEventListener('click', () => { detailTab = b.dataset.dt; showTab(); }));
+  el.querySelectorAll('input[name=choice]').forEach((r) => r.addEventListener('change', () => { choices[p.id] = r.value; editing = false; renderDetail(p); }));
   showTab();
   bindDecide(p);
 }
@@ -411,7 +443,7 @@ function collapseDiff(diff) {
   return out.join('');
 }
 
-function caseHtml(c) {
+function caseHtml(c, alt) {
   const col = (label, runs) => {
     const avg = runs.length ? runs.reduce((a, r) => a + r.score, 0) / runs.length : 0;
     const r = runs[0];
@@ -421,7 +453,7 @@ function caseHtml(c) {
   };
   const e = S.proposals.find((p) => p.id === selected)?.eval;
   return `<div class="case"><div class="case-head"><div class="muted" style="font-size:12px">Built from your request · <span class="mono">${esc(c.name)}</span></div><div class="prompt">${esc(c.prompt)}</div></div>
-    <div class="case-cols">${col(e?.baselineLabel || 'Before', c.before)}${col('With this change', c.after)}</div></div>`;
+    <div class="case-cols ${alt ? 'three' : ''}">${col(e?.baselineLabel || 'Before', c.before)}${col('Drafted skill', c.after)}${alt ? col(alt.id, alt.eval?.cases.find((x) => x.name === c.name)?.after || []) : ''}</div></div>`;
 }
 
 function checksHtml(ch) {
@@ -434,12 +466,20 @@ function checksHtml(ch) {
     : '<p><span class="pill pos">Passed</span> Format check and security scan found nothing.</p>';
 }
 
+function impactHtml(p) {
+  const i = p.impact;
+  if (!i) return '';
+  if (!i.enough) return `<span class="decided" style="flex-basis:100%;margin:0">Impact: waiting for more sessions (${nf.format(i.after.prompts)} prompts since approval, needs 30) to compare <i>${esc(i.kinds.join(', ').toLowerCase())}</i> corrections before and after.</span>`;
+  const d = i.after.rate - i.before.rate;
+  return `<span class="decided" style="flex-basis:100%;margin:0">Impact: <b>${esc(i.kinds.join(', ').toLowerCase())}</b> corrections went from ${rate(i.before.rate)} to ${rate(i.after.rate)} per 100 prompts <span class="delta ${d < -0.5 ? 'good' : d > 0.5 ? 'bad' : ''}">${esc(rateDelta(i.after.rate, i.before.rate))}</span> (4 weeks before vs since approval).</span>`;
+}
+
 function decideBar(p, blocked) {
-  if (p.status === 'approved') return `<span class="decided">Approved ${esc(ago(p.decidedAt))} and installed for ${esc((p.installed || []).map((i) => (i.agent === 'claude' ? 'Claude Code' : i.agent === 'codex' ? 'Codex' : i.agent)).join(', '))}${p.edited ? ' (edited)' : ''}.</span><button class="btn" type="button" id="undo">Undo</button>`;
+  if (p.status === 'approved') return `${impactHtml(p)}<span class="decided">Approved ${esc(ago(p.decidedAt))}${p.chosen && p.chosen !== 'draft' ? ` (${esc(p.chosen)} from the library)` : ''} and installed for ${esc((p.installed || []).map((i) => (i.agent === 'claude' ? 'Claude Code' : i.agent === 'codex' ? 'Codex' : i.agent)).join(', '))}${p.edited ? ' (edited)' : ''}.</span><button class="btn" type="button" id="undo">Undo</button>`;
   if (p.status === 'rejected') return `<span class="decided">Rejected ${esc(ago(p.decidedAt))}${p.reason ? `: ${esc(p.reason)}` : ''}. Studio won't propose this theme again.</span>`;
   const agents = S.agents.map((a) => `<label><input type="checkbox" name="agent" value="${esc(a.id)}" ${a.id === 'claude' ? 'checked' : ''}> ${esc(a.label)}</label>`).join('');
   return `<div class="agents"><span>Install for</span>${agents}</div>
-    <button class="btn quiet" type="button" id="edit">${editing ? 'Stop editing' : 'Edit'}</button>
+    ${(choices[p.id] || defaultChoice(p)) === 'draft' ? `<button class="btn quiet" type="button" id="edit">${editing ? 'Stop editing' : 'Edit'}</button>` : ''}
     <button class="btn danger" type="button" id="reject">Reject</button>
     <button class="btn go" type="button" id="approve" ${blocked ? 'disabled title="Failed the format check or security scan"' : ''}>Approve and install</button>`;
 }
@@ -461,7 +501,7 @@ function bindDecide(p) {
     if (!agents.length) return toast('Choose at least one agent.');
     const skillMd = editing ? document.getElementById('editor')?.value : undefined;
     try {
-      await api(`/api/proposals/${p.id}/approve`, { agents, skillMd });
+      await api(`/api/proposals/${p.id}/approve`, { agents, skillMd, choice: choices[p.id] || defaultChoice(p) });
       editing = false;
       await refresh();
       toast(`Installed ${p.skill}. Undo any time from Approved.`);

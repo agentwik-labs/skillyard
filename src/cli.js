@@ -43,6 +43,7 @@ Connecting agents over MCP
 Studio (learns from your agent logs, with your consent)
   studio [--port 7430]                           Open Studio: correction rate, themes, proposed skill fixes to approve
   studio review [--max 3]                        Run a review now (for a schedule); needs consent given in Studio
+  studio find [--all]                            Search the skill library for existing skills that fix waiting proposals
   studio --demo [--reset]                        Try Studio on a fictional team's data (reads nothing of yours)
 
 Account
@@ -770,7 +771,10 @@ async function studio(args, f) {
     const out = path.resolve(f.out || path.join(REPO_ROOT, 'studio', 'demo-snapshot.json'));
     const state = engine.stats();
     state.job = null;
-    const scrub = (p) => { const { draftDir, target, installed, ...rest } = p; return { ...rest, target: target ? { where: target.where, managed: target.managed } : null }; };
+    const scrub = (p) => {
+      const { draftDir, target, installed, ...rest } = p;
+      return { ...rest, alternatives: (p.alternatives || []).map(({ dir, ...a }) => a), target: target ? { where: target.where, managed: target.managed } : null };
+    };
     state.proposals = state.proposals.map(scrub);
     const diffs = Object.fromEntries(state.proposals.filter((p) => p.before).map((p) => [p.id, engine.diffLines(p.before, p.after)]));
     const skills = engine.installedSkills().map(({ dir, ...k }) => k);
@@ -783,6 +787,15 @@ async function studio(args, f) {
     if (leaks.length) throw new Error(`snapshot contains local details (${leaks.length}); not writing a public demo`);
     fs.writeFileSync(out, json);
     console.log(`wrote read-only Studio demo snapshot to ${tilde(out)}`);
+    return;
+  }
+  if (args[0] === 'find') {
+    // Search the library for skills that already fix the waiting proposals; keeps the proposals.
+    const engine = await import('./studio/engine.js');
+    for (const p of engine.loadState().proposals.filter((x) => x.status === 'pending' && (f.all || !x.searchedAt))) {
+      const alts = await engine.findAlternatives(p.id, { runs: Number(f.runs) || 2, onStep: (t) => console.log(t) });
+      console.log(`${p.skill}: ${alts.length ? alts.map((a) => `${a.id} ${a.eval ? `${Math.round(a.eval.candidate * 100)}% (draft ${Math.round(p.eval.candidate * 100)}%)` : 'untested'}`).join(', ') : 'nothing in the library fits'}`);
+    }
     return;
   }
   if (args[0] === 'review') {

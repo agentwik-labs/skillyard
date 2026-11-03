@@ -6,6 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { captureAll, SOURCES, TYPE_LABELS } from './capture.js';
 import { askJson } from './llm.js';
+import { loadLibrary, keywordCandidates, pickCandidates, fetchSkill } from './finder.js';
 import { evalSkill } from '../eval.js';
 import { AGENTS, installBundle, MARKER } from '../agents.js';
 import { checksum, parseFrontmatter, readSkillDir, validateFiles } from '../skill.js';
@@ -183,6 +184,21 @@ export function stats({ project } = {}) {
     };
   }).sort((a, b) => b.prompts - a.prompts);
   const approved = s.proposals.filter((p) => p.status === 'approved');
+  // Impact after approval: the rate of the correction kinds a fix targeted, before vs since it was installed.
+  const allPrompts = allSessions.flatMap((x) => x.prompts.map((t) => ({ t, project: x.project }))).filter((x) => x.t);
+  const allCorr = allSessions.flatMap((x) => x.corrections);
+  for (const p of s.proposals) {
+    if (p.status !== 'approved' || !p.decidedAt) continue;
+    const kinds = new Set(p.evidence.map((e) => e.type).filter((t) => t !== 'interrupted'));
+    const at = new Date(p.decidedAt).getTime();
+    const win = (from, to) => {
+      const pr = allPrompts.filter((x) => { const t = new Date(x.t).getTime(); return t >= from && t < to; }).length;
+      const co = allCorr.filter((c) => kinds.has(c.type) && (() => { const t = new Date(c.time).getTime(); return t >= from && t < to; })()).length;
+      return { prompts: pr, corrections: co, rate: pr ? (100 * co) / pr : null };
+    };
+    p.impact = { kinds: [...kinds].map((k) => TYPE_LABELS[k]), before: win(at - 28 * 864e5, at), after: win(at, Date.now() + 1), enough: false };
+    p.impact.enough = p.impact.after.prompts >= 30 && p.impact.before.prompts >= 30;
+  }
   return {
     consent: s.consent,
     lastScan: s.lastScan,
@@ -406,7 +422,7 @@ async function reviewInner({ maxProposals = 3, runs = 1, fresh = false, onStep =
         model: result.model, judge: process.env.SKILLYARD_JUDGE_MODEL || 'sonnet', runs, baselineLabel: target ? 'Current skill' : 'No skill',
         baseline: result.baseline, candidate: result.withSkill, lift: result.lift,
         cases: cases.map((c) => ({
-          name: c.name, prompt: c.prompt,
+          name: c.name, prompt: c.prompt, checks: c.checks,
           before: result.cases.filter((r) => r.case === c.name && r.condition === 'without' && !r.error).map((r) => ({ score: r.score, checks: r.checks, output: r.output.slice(0, 1500) })),
           after: result.cases.filter((r) => r.case === c.name && r.condition === 'with' && !r.error).map((r) => ({ score: r.score, checks: r.checks, output: r.output.slice(0, 1500) })),
         })),
@@ -417,6 +433,10 @@ async function reviewInner({ maxProposals = 3, runs = 1, fresh = false, onStep =
     });
     record(s, 'Proposed a skill change', `${theme.kind === 'improve' ? 'Improve' : 'New'} ${v.manifest?.name || theme.skill}`);
     saveState(s);
+    try { await findAlternatives(s.proposals[0].id, { model, runs, onStep }); } catch (e) {
+      if (e.agentFailure) throw e;
+      onStep(`Library search skipped for ${theme.skill}: ${e.message}`);
+    }
   }
   s = loadState();
   s.lastReview = new Date().toISOString();
@@ -439,6 +459,54 @@ export async function notify(proposals, { test = false } = {}) {
   const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: lines.join('\n') }) });
   if (!res.ok) throw new Error(`webhook answered ${res.status}`);
   return true;
+}
+
+/**
+ * Look in the skill library for existing skills that target this proposal's failure, test the best ones on the
+ * same cases (reusing the proposal's measured baseline), and attach them as alternatives.
+ */
+export async function findAlternatives(id, { model, runs = 2, onStep = () => {} } = {}) {
+  let s = loadState();
+  const p = s.proposals.find((x) => x.id === id);
+  if (!p) throw new Error('proposal not found');
+  model ||= s.consent.modelReview.model;
+  const lib = await loadLibrary(STUDIO_DIR);
+  const theme = { title: p.title, problem: p.problem, skill: p.skill };
+  const candidates = keywordCandidates(lib, theme, { exclude: [p.skill] });
+  onStep(`Searching the library for ${p.skill}: ${candidates.length} candidate${candidates.length === 1 ? '' : 's'}`);
+  const picks = await pickCandidates(theme, candidates, { model });
+  const cases = (p.eval?.cases || []).map((c) => ({
+    name: c.name, prompt: c.prompt,
+    checks: c.checks || (c.before[0] || c.after[0])?.checks.map((x) => ({ type: 'judge', value: x.label })) || [],
+  })).filter((c) => c.checks.length);
+  const alternatives = [];
+  for (const pick of picks) {
+    let found;
+    try { found = await fetchSkill(lib, pick.id); } catch (e) { onStep(`Could not use ${pick.id}: ${e.message}`); continue; }
+    let result = null;
+    if (cases.length && p.eval) {
+      onStep(`Testing ${pick.id} on ${p.skill}'s cases (${cases.length * runs} runs)`);
+      result = await evalSkill(found.dir, { model, runs, cases, conditions: ['with'], baselineDir: p.target?.dir, tools: ['Skill'] });
+    }
+    const meta = lib.skills.find((x) => x.id === pick.id) || {};
+    alternatives.push({
+      id: pick.id, name: found.info.name, title: found.info.title, description: found.info.description, reason: String(pick.reason || '').slice(0, 200),
+      license: found.info.license, author: found.info.author, source: found.info.source || meta.source || null,
+      libraryUrl: `${lib.base}/#/skill/${pick.id}`, dir: found.dir, skillMd: found.skillMd,
+      eval: result ? {
+        candidate: result.withSkill, lift: result.withSkill - p.eval.baseline,
+        cases: cases.map((c) => ({ name: c.name, after: result.cases.filter((r) => r.case === c.name && !r.error).map((r) => ({ score: r.score, checks: r.checks, output: r.output.slice(0, 1500) })) })),
+      } : null,
+    });
+  }
+  s = loadState();
+  const q = s.proposals.find((x) => x.id === id);
+  q.alternatives = alternatives;
+  q.searchedAt = new Date().toISOString();
+  q.searched = { library: lib.base, candidates: candidates.length };
+  record(s, 'Searched the skill library', `${q.skill}: ${alternatives.length ? alternatives.map((a) => a.id).join(', ') : 'nothing that fits'}`);
+  saveState(s);
+  return alternatives;
 }
 
 export function startJob(kind, fn) {
@@ -466,8 +534,11 @@ export function decide(id, action, opts = {}) {
     if (p.checks.blocked) throw Object.assign(new Error('this draft failed the format check or security scan'), { status: 422 });
     const agents = (opts.agents || []).filter((a) => AGENTS[a] && !AGENTS[a].projectOnly);
     if (!agents.length) throw Object.assign(new Error('choose at least one agent'), { status: 400 });
-    const text = typeof opts.skillMd === 'string' && opts.skillMd.trim() ? opts.skillMd : p.after;
-    const files = { ...readSkillDir(p.draftDir), 'SKILL.md': Buffer.from(text.endsWith('\n') ? text : `${text}\n`) };
+    const alt = opts.choice && opts.choice !== 'draft' ? (p.alternatives || []).find((a) => a.id === opts.choice) : null;
+    if (opts.choice && opts.choice !== 'draft' && !alt) throw Object.assign(new Error('unknown option'), { status: 400 });
+    const baseDir = alt ? alt.dir : p.draftDir;
+    const text = alt ? alt.skillMd : typeof opts.skillMd === 'string' && opts.skillMd.trim() ? opts.skillMd : p.after;
+    const files = { ...readSkillDir(baseDir), 'SKILL.md': Buffer.from(text.endsWith('\n') ? text : `${text}\n`) };
     const v = validateFiles(files);
     const sc = scanFiles(files);
     if (!v.ok || sc.critical) throw Object.assign(new Error(`edited skill failed checks: ${[...v.errors, ...sc.findings.filter((f) => f.severity === 'critical').map((f) => f.message)].join('; ')}`), { status: 422 });
@@ -484,7 +555,7 @@ export function decide(id, action, opts = {}) {
         installed.push({ agent: a, dir: dest, backup });
       } else installed.push({ agent: a, dir: dest, backup: null });
       installBundle(a, {
-        id: `@studio/${name}`, name, version: new Date().toISOString().slice(0, 10), checksum: checksum(files),
+        id: alt ? alt.id : `@studio/${name}`, name, version: new Date().toISOString().slice(0, 10), checksum: checksum(files),
         files: Object.fromEntries(Object.entries(files).map(([k, b]) => [k, b.toString('base64')])),
       }, { ...INSTALL, force: true });
     }
@@ -497,8 +568,9 @@ export function decide(id, action, opts = {}) {
     p.status = 'approved';
     p.decidedAt = new Date().toISOString();
     p.installed = installed;
-    p.edited = text !== p.after;
-    record(s, 'Approved and installed', `${name} for ${agents.map((a) => AGENTS[a].label).join(', ')}${p.edited ? ' (edited)' : ''}`);
+    p.edited = !alt && text !== p.after;
+    p.chosen = alt ? alt.id : 'draft';
+    record(s, 'Approved and installed', `${alt ? `${alt.id} from the library` : name} for ${agents.map((a) => AGENTS[a].label).join(', ')}${p.edited ? ' (edited)' : ''}`);
   } else if (action === 'undo') {
     if (p.status !== 'approved') throw Object.assign(new Error('only approved proposals can be undone'), { status: 409 });
     for (const i of p.installed || []) {
