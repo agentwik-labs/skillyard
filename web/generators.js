@@ -65,7 +65,7 @@ export const GENERATORS = [
       { key: 'skip', label: 'Do not flag', help: 'Things reviewers waste time on', kind: 'list' },
       { key: 'output', label: 'Report format', kind: 'textarea', example: 'A ranked list: blocker or should-fix, where, why, the exact fix.' },
       ...tests],
-    description: 'Reviews {{reviews|lower}} against the team\'s checklist and reports what must change. Use when someone says {{triggers|quoted}}.',
+    description: 'Checks {{reviews|lower}} Reports what must change, most important first. Use when someone says {{triggers|quoted}}.',
     body: `# {{title}}
 
 Review {{reviews|lower}} Report only what the checklist covers, most important first.
@@ -218,7 +218,7 @@ The decision (approve, deny or escalate), the rule that decided it, and who has 
       { key: 'checks', label: 'Sanity checks', help: 'What must be true before you trust the numbers', kind: 'list' },
       { key: 'output', label: 'Report layout', kind: 'textarea', example: 'A table: metric, this week, last week, plan, change; then three sentences on what moved and why.' },
       ...tests],
-    description: 'Computes and reports {{report|lower}} with the team\'s exact definitions. Use when someone says {{triggers|quoted}}.',
+    description: 'Computes and reports {{report|lower}} Uses the team\'s exact metric definitions. Use when someone says {{triggers|quoted}}.',
     body: `# {{title}}
 
 Produce {{report|lower}} Use these definitions exactly; never substitute a similar metric.

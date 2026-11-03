@@ -45,7 +45,7 @@ export function createStudioServer({ port }) {
         const rel = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
         const file = path.join(UI_DIR, path.normalize(rel).replace(/^(\.\.[/\\])+/, ''));
         if (!file.startsWith(UI_DIR) || !fs.existsSync(file)) return send(404, 'not found', 'text/plain');
-        res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'");
+        res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; font-src https://fonts.gstatic.com https://cdn.fontshare.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'");
         return send(200, fs.readFileSync(file), MIME[path.extname(file)] || 'application/octet-stream');
       }
       if (req.method !== 'GET' && req.headers['x-skillyard-studio'] !== '1') return send(403, { error: 'missing Studio header' });

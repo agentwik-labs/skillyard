@@ -768,13 +768,15 @@ async function exportSite(f) {
   // Stamp asset URLs with the build so browsers fetch the new CSS and JS after every deploy.
   const v = Date.now().toString(36);
   const idx = path.join(out, 'index.html');
-  fs.writeFileSync(idx, fs.readFileSync(idx, 'utf8').replace(/(href|src)="((?:style|landing)\.css|(?:app|static)\.js)"/g, `$1="$2?v=${v}"`));
+  fs.writeFileSync(idx, fs.readFileSync(idx, 'utf8').replace(/(href|src)="((?:style|landing)\.css|(?:app|static|config)\.js)"/g, `$1="$2?v=${v}"`));
   // The read-only Studio demo, if a snapshot has been exported.
   const studioSrc = path.join(REPO_ROOT, 'studio');
   if (fs.existsSync(path.join(studioSrc, 'demo-snapshot.json'))) {
     fs.cpSync(studioSrc, path.join(out, 'studio'), { recursive: true });
     fs.writeFileSync(path.join(out, 'studio', 'static.js'), 'window.STUDIO_STATIC = true;\n');
     fs.copyFileSync(path.join(webDir, 'generators.js'), path.join(out, 'studio', 'generators.js'));
+    const sidx = path.join(out, 'studio', 'index.html');
+    fs.writeFileSync(sidx, fs.readFileSync(sidx, 'utf8').replace(/(href|src)="((?:studio)\.css|(?:studio|charts|static)\.js)"/g, `$1="$2?v=${Date.now().toString(36)}"`));
   }
   fs.writeFileSync(path.join(out, '.nojekyll'), '');
   const all = store.search({ limit: 10000 }, ADMIN).map(({ score, ...s }) => s);

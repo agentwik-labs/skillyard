@@ -137,6 +137,9 @@ skillyard token create --org acme --scopes read --name laptop-dana
 skillyard new deploy-runbook && skillyard publish deploy-runbook --org acme
 ```
 
+Sign-ups on the public site (the monthly report, audit requests, the Studio waitlist) post to the email-list endpoint in
+[`web/config.js`](web/config.js); until one is set, the forms point to the contact link instead.
+
 Or with Docker: `docker build -t skillyard . && docker run -p 7420:7420 -v skillyard-data:/data skillyard`.
 Put it behind TLS (any reverse proxy). Tokens are stored as SHA-256 hashes; org members manage tokens and see the
 activity log on their org page. See [docs/self-hosting.md](docs/self-hosting.md).

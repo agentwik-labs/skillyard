@@ -710,7 +710,7 @@ async function viewCreate(params) {
 
 function demoBar() {
   if (!STATIC || document.querySelector('.demo-bar')) return;
-  app.insertAdjacentHTML('afterbegin', '<div class="demo-bar">Read-only demo of a fictional team. To approve, edit and undo, run <code>npx skillyard studio --demo</code>; to use your own logs, <code>npx skillyard studio</code>.</div>');
+  app.insertAdjacentHTML('afterbegin', '<div class="demo-bar">Read-only demo of a fictional team. Run it on your own logs with <code>npx skillyard studio</code>, or <a href="../#/teams?ask=waitlist">join the waitlist for Studio for teams</a>.</div>');
 }
 
 function setCrumb(t) {

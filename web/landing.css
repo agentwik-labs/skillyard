@@ -174,6 +174,69 @@ body.is-landing main { max-width: none; padding: 0; }
 .cta-sentence button:active { transform: translateY(2px); }
 .cta-note { margin: 24px 0 0; color: var(--muted); font-size: var(--step-small); max-width: 70ch; }
 
+/* the offer: a price list, one row per thing we sell */
+.lp-offer, .lp-why, .lp-faq { padding-top: 200px; }
+.offer-lede { margin: 28px 0 0; max-width: 52ch; font-size: var(--step-lead); line-height: 1.35; letter-spacing: -0.012em; }
+.offer { list-style: none; margin: 72px 0 0; padding: 0; }
+.offer li { display: grid; grid-template-columns: 3fr 6fr 2fr 2.4fr; column-gap: 32px; align-items: baseline; padding: 26px 20px; margin: 0 -20px; border-radius: 10px; transition: background .15s; }
+.offer li:nth-child(odd) { background: var(--surface); }
+.o-name { font-size: var(--step-lead); font-weight: 600; letter-spacing: -0.02em; }
+.o-what { color: var(--ink); max-width: 56ch; }
+.o-price { font-size: var(--step-lead); font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; display: grid; }
+.o-price small { font-size: var(--step-small); font-weight: 500; color: var(--accent); letter-spacing: 0; }
+.o-cta { justify-self: end; font-weight: 500; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.o-cta:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* why us: four reasons, each led by its number */
+.reasons { list-style: none; margin: 72px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 56px 40px; }
+.reasons li { display: grid; gap: 10px; align-content: start; }
+.reasons em { font-style: normal; white-space: nowrap; font-size: clamp(2rem, 3.1vw, 3.3rem); font-weight: 600; letter-spacing: -0.04em; line-height: 1; color: var(--accent); }
+.reasons b { font-size: var(--step-lead); font-weight: 600; letter-spacing: -0.02em; }
+.reasons span { max-width: 52ch; }
+
+/* questions */
+.faq { margin: 72px 0 0; display: grid; grid-template-columns: 5fr 7fr; column-gap: 64px; }
+.faq dt { font-size: var(--step-lead); font-weight: 600; letter-spacing: -0.02em; padding: 28px 0 0; }
+.faq dd { margin: 0; padding: 30px 0 0; max-width: 60ch; }
+
+/* teams hero */
+.lp-hero-teams { min-height: auto; padding-top: 12vh; padding-bottom: 0; }
+.lp-sentence.teams { font-size: clamp(2.6rem, 5.1vw, 5.4rem); }
+.teams-hero { display: grid; grid-template-columns: 7fr 5fr; column-gap: 56px; align-items: center; }
+.lp .lp-action.big { height: 52px; padding: 0 24px; font-size: var(--step-body); margin-top: 36px; }
+.report { margin: 0; background: var(--field); color: #fff; border-radius: 12px; padding: 26px; display: grid; gap: 16px; }
+.r-k { font-size: var(--step-small); color: #a8a8a8; }
+.r-t { font-size: var(--step-lead); font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+.r-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.r-sum div { background: #1c1c1c; border-radius: 8px; padding: 12px 14px; display: grid; }
+.r-sum b { font-size: var(--step-head); font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
+.r-sum span { font-size: var(--step-small); color: #b8b8b8; margin-top: 6px; }
+.r-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.r-rows li { display: grid; grid-template-columns: 9em 1fr; gap: 12px; font-size: var(--step-small); padding: 10px 12px; border-radius: 8px; background: #161616; }
+.r-rows span { font-weight: 600; }
+.r-rows i { font-style: normal; color: #d0d0d0; }
+.r-rows .bad i { color: #ff7a6e; }
+.r-rows .ok i { color: #7fd6a4; }
+.report figcaption { font-size: var(--step-small); color: #a8a8a8; }
+.proof-strip { display: grid; grid-template-columns: 7fr 5fr; gap: 32px; margin-top: 72px; align-items: start; }
+.proof-strip .scan { margin: 0; max-width: none; }
+.proof-side { display: grid; gap: 28px; }
+.proof-strip .sp, .proof-side .m-rows { grid-column: auto; }
+.m-rows.mini { gap: 22px; }
+.offer-head { display: grid; grid-template-columns: 7fr 5fr; column-gap: 56px; align-items: end; }
+.pack { margin: 0; background: var(--surface); border-radius: 12px; padding: 22px; display: grid; gap: 12px; }
+.pack .r-k { color: var(--muted); }
+.pack ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pack li { display: flex; justify-content: space-between; background: #fff; border-radius: 7px; padding: 9px 12px; font-size: var(--step-small); }
+.pack li span { font-weight: 600; }
+.pack li b { color: var(--accent); font-variant-numeric: tabular-nums; }
+.pack figcaption { font-size: var(--step-small); color: var(--muted); }
+.cta-btn { display: inline-flex; align-items: center; height: 1.08em; padding: 0 .35em; border-radius: .12em; background: var(--accent); color: var(--accent-ink) !important; text-decoration: none; font-size: .62em; letter-spacing: -0.02em; }
+.cta-sentence input[type=email] { width: 10em; }
+.ask-switch { margin: 18px 0 0; color: var(--muted); }
+.ask-switch a { color: var(--ink); }
+.ask-switch b { color: var(--accent); font-weight: 600; }
+
 /* footer: invitation over a cropped name */
 .lp-foot { background: var(--field); color: var(--field-ink); min-height: 92svh; position: relative; overflow: hidden; padding: 96px var(--m) 0; display: flex; flex-direction: column; }
 .lp-foot-top { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 32px; }
@@ -207,6 +270,9 @@ body.is-landing main { max-width: none; padding: 0; }
   .lp-measured { grid-template-columns: 1fr; row-gap: 56px; }
   .m-left, .m-rows { grid-column: 1; position: static; }
   .lp-h { max-width: 20ch; }
+  .teams-hero, .offer-head, .proof-strip { grid-template-columns: 1fr; row-gap: 40px; }
+  .lp-sentence.teams { font-size: 8vw; }
+  .reasons { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* phone: the window in the sentence takes its own line */
@@ -244,6 +310,17 @@ body.is-landing main { max-width: none; padding: 0; }
   .cta-sentence input { width: 100%; order: 2; }
   .cta-sentence button { order: 3; }
   .lp-foot { padding-top: 64px; min-height: 80svh; }
+  .lp-offer, .lp-why, .lp-faq { padding-top: 120px; }
+  .offer li { grid-template-columns: 1fr auto; row-gap: 10px; }
+  .o-what { grid-column: 1 / -1; grid-row: 2; }
+  .o-cta { grid-column: 1 / -1; justify-self: start; }
+  .reasons, .faq { grid-template-columns: 1fr; }
+  .faq dd { padding-top: 8px; }
+  .lp-sentence.teams { font-size: 9.4vw; }
+  .offer-head { grid-template-columns: 1fr; row-gap: 32px; }
+  .teams-hero, .proof-strip { grid-template-columns: 1fr; row-gap: 40px; }
+  .r-rows li { grid-template-columns: 1fr; gap: 2px; }
+  .cta-btn { font-size: .7em; }
   .lp-foot-top > div, .lp-foot ul { grid-column: 1; }
   .lp-foot ul { display: flex; flex-wrap: wrap; gap: 8px 18px; }
   .lp-big { font-size: 34vw; }
