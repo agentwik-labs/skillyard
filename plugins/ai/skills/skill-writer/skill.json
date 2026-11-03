@@ -1,0 +1,10 @@
+{
+  "name": "skill-writer",
+  "version": "1.0.0",
+  "title": "Skill Writer",
+  "summary": "Turns your SOPs, policies and know-how into tested Agent Skills, in the right shape, from an interview or a document.",
+  "category": "ai",
+  "tags": ["skills", "generator", "sop", "knowledge", "agents"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

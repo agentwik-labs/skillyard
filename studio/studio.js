@@ -383,14 +383,14 @@ async function renderDetail(p) {
     const { diff } = await api(`/api/diff?id=${encodeURIComponent(p.id)}`);
     diffHtml = collapseDiff(diff);
   } else {
-    diffHtml = p.after.split('\n').map((t) => `<div class="add" data-op="+">${esc(t) || ' '}</div>`).join('');
+    diffHtml = p.after.split('\n').map((t) => `<div class="add" data-op="+">${esc(t) || '&nbsp;'}</div>`).join('');
   }
-  const verdictWhy = !e ? 'Not tested: the draft had no runnable test cases.'
+  const verdictWhy = !e ? (p.origin === 'created' && S.job && !S.job.finishedAt ? 'Testing now…' : 'Not tested: no example request and checks were given.')
     : e.lift > NOISE ? `Scored clearly higher than ${esc(e.baselineLabel.toLowerCase())} on tests built from your requests.`
       : e.lift < -NOISE ? `Scored clearly lower than ${esc(e.baselineLabel.toLowerCase())}. Approving it would likely make things worse; consider rejecting.`
         : `Within noise: no clear difference from ${esc(e.baselineLabel.toLowerCase())} at this many runs. Approve only if the change itself reads right to you.`;
   el.innerHTML = `
-    <div class="k" style="font-size:13px;color:var(--muted)">${p.kind === 'improve' ? `Improve your <span class="mono">${esc(p.skill)}</span> skill` : `New skill <span class="mono">${esc(p.skill)}</span>`}</div>
+    <div class="k" style="font-size:13px;color:var(--muted)">${p.origin === 'created' ? `Created from the ${esc(p.generator)} generator · <span class="mono">${esc(p.skill)}</span>` : p.kind === 'improve' ? `Improve your <span class="mono">${esc(p.skill)}</span> skill` : `New skill <span class="mono">${esc(p.skill)}</span>`}</div>
     <h2>${esc(p.title)}</h2>
     <p class="lede">${esc(p.problem)}${p.summary ? ` ${esc(p.summary)}` : ''}</p>
     <div class="verdict">
@@ -400,7 +400,7 @@ async function renderDetail(p) {
       <div class="why">${verdictWhy}${e ? ` <span class="muted">Answers by ${esc(e.model)}, graded by ${esc(e.judge || 'haiku')}; ${e.cases.length} case${e.cases.length === 1 ? '' : 's'}, ${e.runs} run${e.runs === 1 ? '' : 's'} each.</span>` : ''}</div>
     </div>
     ${optionsHtml(p)}
-    <div class="section-head"><h2>Why: your corrections</h2><span class="meta">${nf.format(p.evidence.length)} found</span></div>
+    ${p.origin === 'created' ? '' : `<div class="section-head"><h2>Why: your corrections</h2><span class="meta">${nf.format(p.evidence.length)} found</span></div>`}
     <div class="evidence">${groupEvidence(p.evidence).slice(0, 4).map((c) => `<div class="ev">
       <div><div class="label"><span>You asked</span><span class="mono">${esc(c.project)}</span></div>${esc(c.asked) || '<span class="dash">—</span>'}</div>
       <div><div class="label"><span>You said${c.times > 1 ? `, ${c.times} times` : ''}</span><span>${esc(ago(c.time))}</span></div><span class="quote">${esc(c.said)}</span></div>
@@ -415,7 +415,7 @@ async function renderDetail(p) {
     el.querySelectorAll('[data-dt]').forEach((b) => b.classList.toggle('on', b.dataset.dt === detailTab));
     const chosen = choices[p.id] || defaultChoice(p);
     const alt = (p.alternatives || []).find((a) => a.id === chosen);
-    if (detailTab === 'change' && alt) dt.innerHTML = `<p class="muted" style="font-size:13px;margin-top:0">Installs <span class="mono">${esc(alt.id)}</span> as published${alt.source ? `, from <a href="${esc(alt.source.repo)}/tree/${esc(alt.source.commit)}/${esc(alt.source.path)}" target="_blank" rel="noopener noreferrer">its source</a>` : ''}. Licence: ${esc(alt.license || 'unknown')}.</p><div class="diff">${alt.skillMd.split('\n').map((t) => `<div class="add" data-op="+">${esc(t) || ' '}</div>`).join('')}</div>`;
+    if (detailTab === 'change' && alt) dt.innerHTML = `<p class="muted" style="font-size:13px;margin-top:0">Installs <span class="mono">${esc(alt.id)}</span> as published${alt.source ? `, from <a href="${esc(alt.source.repo)}/tree/${esc(alt.source.commit)}/${esc(alt.source.path)}" target="_blank" rel="noopener noreferrer">its source</a>` : ''}. Licence: ${esc(alt.license || 'unknown')}.</p><div class="diff">${alt.skillMd.split('\n').map((t) => `<div class="add" data-op="+">${esc(t) || '&nbsp;'}</div>`).join('')}</div>`;
     else if (detailTab === 'change') dt.innerHTML = editing && p.status === 'pending'
       ? `<textarea class="editor" id="editor" spellcheck="false" aria-label="Edit SKILL.md">${esc(p.after)}</textarea><p class="muted" style="font-size:13px">Your edit is checked again (format and security scan) when you approve. Edited versions are not re-tested.</p>`
       : `<div class="diff">${diffHtml}</div>`;
@@ -437,7 +437,7 @@ function collapseDiff(diff) {
   diff.forEach((d, i) => {
     if (d.op === ' ' && !keep.has(i)) { folded++; return; }
     if (folded) { out.push(`<div class="gap" data-op="⋯">${folded} unchanged line${folded === 1 ? '' : 's'}</div>`); folded = 0; }
-    out.push(`<div class="${d.op === '+' ? 'add' : d.op === '-' ? 'del' : ''}" data-op="${d.op === ' ' ? '' : esc(d.op)}">${esc(d.text) || ' '}</div>`);
+    out.push(`<div class="${d.op === '+' ? 'add' : d.op === '-' ? 'del' : ''}" data-op="${d.op === ' ' ? '' : esc(d.op)}">${esc(d.text) || '&nbsp;'}</div>`);
   });
   if (folded) out.push(`<div class="gap" data-op="⋯">${folded} unchanged line${folded === 1 ? '' : 's'}</div>`);
   return out.join('');
@@ -615,6 +615,97 @@ async function viewPrivacy() {
   });
 }
 
+// ---- create ------------------------------------------------------------------------
+
+let gens = null;
+const createState = { gen: null, mode: 'document', answers: {}, document: '', built: null, busy: false };
+
+async function viewCreate(params) {
+  setCrumb('Create a skill');
+  if (!gens) gens = (await import('./generators.js')).GENERATORS;
+  const genMod = await import('./generators.js');
+  createState.gen = params.get('g') || null;
+  const g = gens.find((x) => x.id === createState.gen);
+  if (!g) {
+    app.innerHTML = `
+    <div class="title-row"><div><h1>Create a skill</h1><p class="finding">Pick the kind of knowledge you want your agents to follow. Paste a document you already have (an SOP, a wiki page, a policy) and Studio fills it in, or answer a few questions.</p></div></div>
+    <div class="gens">${gens.map((x) => `<a class="gen" href="#/create?g=${x.id}"><b>${esc(x.title)}</b><span>${esc(x.summary)}</span></a>`).join('')}</div>
+    <p class="muted" style="font-size:13px;margin-top:16px">Every skill you create is checked, tested on your example request when you give one, and waits in Proposals for your approval like any other.</p>`;
+    return;
+  }
+  const field = (f) => {
+    const v = createState.answers[f.key];
+    const val = Array.isArray(v) ? v.join('\n') : v || '';
+    const input = f.kind === 'text'
+      ? `<input name="${f.key}" value="${esc(val)}" placeholder="${esc(f.example || '')}">`
+      : `<textarea name="${f.key}" rows="${f.kind === 'list' ? 4 : 3}" placeholder="${esc(f.example || (f.kind === 'list' ? 'One per line' : ''))}">${esc(val)}</textarea>`;
+    return `<label class="fld"><span>${esc(f.label)}${f.required ? '' : ' <i class="muted">optional</i>'}</span>${f.help ? `<small class="muted">${esc(f.help)}</small>` : ''}${input}</label>`;
+  };
+  app.innerHTML = `
+  <div class="title-row"><div><h1>${esc(g.title)}</h1><p class="finding muted">${esc(g.summary)} <a href="#/create">Choose another kind</a></p></div></div>
+  <div class="create">
+    <div>
+      <div class="tabs" role="tablist">
+        <button type="button" data-mode="document" class="${createState.mode === 'document' ? 'on' : ''}">From a document</button>
+        <button type="button" data-mode="form" class="${createState.mode === 'form' ? 'on' : ''}">Answer questions</button>
+      </div>
+      ${createState.mode === 'document' ? `
+        <label class="fld"><span>Paste the document</span><small class="muted">Sent once to Claude through your own login to fill the fields. Nothing else is sent.</small>
+        <textarea id="doc" rows="16" placeholder="Paste an SOP, a policy, a wiki page, a playbook…">${esc(createState.document)}</textarea></label>
+        <button class="btn primary" type="button" id="fill" ${createState.busy ? 'disabled' : ''}>${createState.busy ? 'Reading…' : 'Fill from document'}</button>
+        <p class="muted" style="font-size:13px">Then check the answers under "Answer questions" before you create it.</p>`
+      : `<form id="gform">${g.fields.map(field).join('')}</form>`}
+    </div>
+    <div class="preview-pane">
+      <div class="section-head"><h2>Preview</h2><span class="meta" id="pstatus"></span></div>
+      <div class="diff" id="pview"></div>
+      <div class="decide" style="position:static;margin:16px 0 0;padding:0;border:0">
+        <span class="decided" id="pnote"></span>
+        <button class="btn go" type="button" id="create">Create and test</button>
+      </div>
+    </div>
+  </div>`;
+  const update = () => {
+    const built = genMod.generate(g.id, createState.answers);
+    createState.built = built;
+    const md = built.files['SKILL.md'];
+    document.getElementById('pview').innerHTML = md.split('\n').map((t) => `<div data-op="">${esc(t) || '&nbsp;'}</div>`).join('');
+    const tests = built.files['evals/evals.json'] ? JSON.parse(built.files['evals/evals.json']).cases[0].checks.length : 0;
+    document.getElementById('pstatus').textContent = `${md.split('\n').length} lines · ${tests ? `${tests} test check${tests === 1 ? '' : 's'}` : 'no test yet'}`;
+    document.getElementById('pnote').textContent = built.missing.length ? `Still needed: ${built.missing.join(', ')}` : tests ? 'Ready. It will be tested with and without, then wait for your approval.' : 'Ready. Add an example request and checks to have it tested.';
+    document.getElementById('create').disabled = !!built.missing.length || createState.busy;
+  };
+  app.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { createState.mode = b.dataset.mode; viewCreate(new URLSearchParams(`g=${g.id}`)); }));
+  document.getElementById('gform')?.addEventListener('input', (e) => {
+    const f = g.fields.find((x) => x.key === e.target.name);
+    if (f) createState.answers[f.key] = f.kind === 'list' ? e.target.value.split('\n') : e.target.value;
+    update();
+  });
+  document.getElementById('doc')?.addEventListener('input', (e) => { createState.document = e.target.value; });
+  document.getElementById('fill')?.addEventListener('click', async () => {
+    if (!createState.document.trim()) return toast('Paste a document first.');
+    createState.busy = true; viewCreate(new URLSearchParams(`g=${g.id}`));
+    try {
+      const r = await api('/api/generate', { generator: g.id, document: createState.document });
+      createState.answers = r.answers;
+      createState.mode = 'form';
+      toast('Filled from your document. Check the answers, then create.');
+    } catch (e) { toast(e.message); }
+    createState.busy = false;
+    viewCreate(new URLSearchParams(`g=${g.id}`));
+  });
+  document.getElementById('create').addEventListener('click', async () => {
+    try {
+      const p = await api('/api/create', { generator: g.id, answers: createState.answers });
+      Object.assign(createState, { answers: {}, document: '', built: null, gen: null, mode: 'document' });
+      await refresh();
+      toast(p.eval === null ? 'Created. Testing it now; it is waiting in Proposals.' : 'Created.');
+      location.hash = `#/proposals?id=${p.id}`;
+    } catch (e) { toast(e.message); }
+  });
+  update();
+}
+
 // ---- shell -------------------------------------------------------------------------
 
 function demoBar() {
@@ -642,6 +733,7 @@ async function route() {
     else if (name === 'proposals') viewProposals(params);
     else if (name === 'themes') viewThemes();
     else if (name === 'projects') viewProjects();
+    else if (name === 'create') await viewCreate(params);
     else if (name === 'corrections') viewCorrections(params);
     else if (name === 'skills') await viewSkills();
     else if (name === 'privacy') await viewPrivacy();

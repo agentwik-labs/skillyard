@@ -1,0 +1,10 @@
+{
+  "name": "proposal-writing",
+  "version": "1.0.0",
+  "title": "Proposal Writing",
+  "summary": "Draft client proposals and SOWs that restate the problem, fix scope and exclusions, and price with clear options.",
+  "category": "sales",
+  "tags": ["sales", "proposal", "sow", "pricing", "clients"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

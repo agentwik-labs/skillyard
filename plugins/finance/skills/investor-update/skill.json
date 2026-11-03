@@ -1,0 +1,10 @@
+{
+  "name": "investor-update",
+  "version": "1.0.0",
+  "title": "Investor Update",
+  "summary": "Write investor updates that lead with numbers vs plan, cash and runway, honest misses, and specific asks.",
+  "category": "finance",
+  "tags": ["investors", "fundraising", "startups", "reporting", "runway"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

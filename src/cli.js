@@ -52,6 +52,9 @@ Account
 
 Authoring
   new <name> [--dir .]                           Scaffold a new skill
+  generate [generator] [--from doc.md | --answers a.json] [--out .] [--license MIT]
+                                                 Build a skill from a generator: procedure, checklist, voice,
+                                                 playbook, decision, metric; --from fills it from your own document
   kit [dir] [--force]                            Copy the team starter kit (guide, session, review checklist,
                                                  data-handling + definition-of-done skills, CI) into a repo
   validate <dir...>                              Check skill directories (or folders of them)
@@ -81,7 +84,7 @@ export async function main(argv) {
   const cmd = args.shift();
   const cmds = {
     serve, seed, org, token, login, whoami, search, info, install, uninstall: uninstallCmd, list, update, init, sync,
-    new: scaffold, kit, studio, import: importCmd, hooks, ci, validate, scan: scanCmd, eval: evalCmd, publish, connect, mcp, export: exportCmd,
+    new: scaffold, kit, studio, import: importCmd, hooks, ci, generate: generateCmd, validate, scan: scanCmd, eval: evalCmd, publish, connect, mcp, export: exportCmd,
   };
   if (!cmd || cmd === 'help' || flags.help) return void process.stdout.write(HELP);
   if (cmd === '--version' || cmd === 'version') return void console.log('0.1.0');
@@ -167,6 +170,35 @@ async function seed(_args, f) {
   }
   console.log(report.join('\n'));
   if (f.community) await importCmd([], f);
+}
+
+async function generateCmd(args, f) {
+  const { GENERATORS, answersFromDocument, buildSkill } = await import('./generate.js');
+  const id = args[0];
+  if (!id) {
+    console.log('Generators:\n');
+    for (const g of GENERATORS) console.log(`  ${g.id.padEnd(10)} ${g.title}\n             ${g.summary}\n`);
+    console.log('skillyard generate <generator> --from <document.md>   or   --answers <answers.json>');
+    return;
+  }
+  if (!GENERATORS.some((g) => g.id === id)) throw new Error(`unknown generator "${id}" (run skillyard generate to list them)`);
+  let answers;
+  if (f.answers) answers = JSON.parse(fs.readFileSync(f.answers, 'utf8'));
+  else if (f.from) {
+    console.log(`reading ${f.from} and filling the ${id} generator…`);
+    answers = await answersFromDocument(id, fs.readFileSync(f.from, 'utf8'), { model: f.model || 'sonnet', hint: f.hint });
+  } else throw new Error('give --from <document> or --answers <file.json>');
+  const r = buildSkill(id, answers, { license: f.license || 'Proprietary', author: f.author || '' });
+  const dir = path.resolve(f.out || '.', r.name);
+  if (fs.existsSync(dir) && !f.force) throw new Error(`${dir} exists (use --force)`);
+  for (const [rel, text] of Object.entries(r.files)) {
+    fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+    fs.writeFileSync(path.join(dir, rel), text);
+  }
+  fs.writeFileSync(path.join(dir, 'generator-answers.json'), `${JSON.stringify(answers, null, 2)}\n`);
+  const notes = [...r.errors, ...r.missing.map((m) => `missing: ${m}`), ...r.scan.map((x) => `${x.severity}: ${x.message}`), ...r.warnings];
+  console.log(`${r.valid ? 'created' : 'created with problems'} ${tilde(dir)}${notes.map((n) => `\n  - ${n}`).join('')}`);
+  console.log(`\nnext:\n  read ${tilde(path.join(dir, 'SKILL.md'))}\n${r.files['evals/evals.json'] ? `  skillyard eval ${tilde(dir)} --model haiku --runs 2\n` : ''}  skillyard install ${tilde(dir)} --agent claude,codex`);
 }
 
 async function hooks(args, f) {
@@ -738,6 +770,7 @@ async function exportSite(f) {
   if (fs.existsSync(path.join(studioSrc, 'demo-snapshot.json'))) {
     fs.cpSync(studioSrc, path.join(out, 'studio'), { recursive: true });
     fs.writeFileSync(path.join(out, 'studio', 'static.js'), 'window.STUDIO_STATIC = true;\n');
+    fs.copyFileSync(path.join(webDir, 'generators.js'), path.join(out, 'studio', 'generators.js'));
   }
   fs.writeFileSync(path.join(out, '.nojekyll'), '');
   const all = store.search({ limit: 10000 }, ADMIN).map(({ score, ...s }) => s);

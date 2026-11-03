@@ -11,7 +11,7 @@
     {
       "name": "skillyard-ai",
       "source": "./plugins/ai",
-      "description": "AI skills: prompt-engineering",
+      "description": "AI skills: prompt-engineering, skill-writer",
       "version": "1.0.0",
       "category": "ai"
     },
@@ -44,11 +44,46 @@
       "category": "engineering"
     },
     {
+      "name": "skillyard-finance",
+      "source": "./plugins/finance",
+      "description": "Finance skills: collections-followup, financial-model-review, investor-update, pricing-review",
+      "version": "1.0.0",
+      "category": "finance"
+    },
+    {
+      "name": "skillyard-marketing",
+      "source": "./plugins/marketing",
+      "description": "Marketing skills: competitive-brief",
+      "version": "1.0.0",
+      "category": "marketing"
+    },
+    {
+      "name": "skillyard-operations",
+      "source": "./plugins/operations",
+      "description": "Operations skills: sop-writing, weekly-business-review",
+      "version": "1.0.0",
+      "category": "operations"
+    },
+    {
+      "name": "skillyard-people",
+      "source": "./plugins/people",
+      "description": "People skills: hiring-scorecard",
+      "version": "1.0.0",
+      "category": "people"
+    },
+    {
       "name": "skillyard-product",
       "source": "./plugins/product",
-      "description": "Product skills: meeting-to-action-items, technical-spec-writing",
+      "description": "Product skills: customer-interview-synthesis, meeting-to-action-items, technical-spec-writing",
       "version": "1.0.0",
       "category": "product"
+    },
+    {
+      "name": "skillyard-sales",
+      "source": "./plugins/sales",
+      "description": "Sales skills: cold-outreach-email, proposal-writing, sales-discovery-call",
+      "version": "1.0.0",
+      "category": "sales"
     },
     {
       "name": "skillyard-security",

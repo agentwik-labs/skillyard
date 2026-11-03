@@ -1,0 +1,10 @@
+{
+  "name": "collections-followup",
+  "version": "1.0.0",
+  "title": "Collections Follow-up",
+  "summary": "Build an AR aging report and chase overdue invoices on an escalation ladder that gets paid and keeps the client.",
+  "category": "finance",
+  "tags": ["accounts-receivable", "collections", "invoices", "cash-flow", "aging"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

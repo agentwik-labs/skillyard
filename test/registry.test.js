@@ -234,3 +234,25 @@ test('starter kit skills are valid and pass the scan', () => {
     assert.equal(scanFiles(files).critical, 0);
   }
 });
+
+test('every generator renders a valid, scan-clean skill and reports missing fields', async () => {
+  const { GENERATORS, generate } = await import('../web/generators.js');
+  assert.ok(GENERATORS.length >= 6);
+  for (const g of GENERATORS) {
+    const answers = {};
+    for (const f of g.fields) answers[f.key] = f.kind === 'list' ? ['First item — because it matters', 'Second item'] : `${f.example || 'Our team handles this carefully'}.`;
+    answers.name = `${g.id} Example`;
+    answers.triggers = ['do the thing', 'help with the thing', 'is this right'];
+    const r = generate(g.id, answers);
+    assert.equal(r.name, `${g.id}-example`);
+    assert.deepEqual(r.missing, []);
+    const files = Object.fromEntries(Object.entries(r.files).map(([k, v]) => [k, Buffer.from(v)]));
+    const v = validateFiles(files);
+    assert.ok(v.ok, `${g.id}: ${v.errors.join('; ')}`);
+    assert.ok(!v.warnings.some((w) => w.includes('description')), `${g.id}: ${v.warnings.join('; ')}`);
+    assert.equal(scanFiles(files).critical, 0);
+    assert.ok(r.files['evals/evals.json'], `${g.id} ships a test`);
+    assert.ok(!/\{\{/.test(r.files['SKILL.md']), `${g.id} left a placeholder`);
+  }
+  assert.ok(generate('procedure', { name: 'x' }).missing.length >= 3);
+});

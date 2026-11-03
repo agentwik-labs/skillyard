@@ -1,0 +1,10 @@
+{
+  "name": "pricing-review",
+  "version": "1.0.0",
+  "title": "Pricing Review",
+  "summary": "Review pricing and packaging against value metric, tiers, discounting and unit economics, then propose testable changes.",
+  "category": "finance",
+  "tags": ["pricing", "packaging", "unit-economics", "saas", "cac-payback"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

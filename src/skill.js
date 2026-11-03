@@ -8,7 +8,7 @@ export const SCOPE_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const SEMVER_RE = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/;
 export const CATEGORIES = [
   'engineering', 'devops', 'testing', 'security', 'data', 'docs', 'product', 'ai',
-  'support', 'sales', 'compliance', 'people', 'other',
+  'support', 'sales', 'marketing', 'finance', 'operations', 'compliance', 'people', 'other',
 ];
 export const LIMITS = { files: 200, fileBytes: 1024 * 1024, totalBytes: 5 * 1024 * 1024 };
 
@@ -133,10 +133,11 @@ export function validateFiles(files) {
   const manifest = {
     name: fm.name,
     description: fm.description,
-    license: fm.license || meta.license || null,
+    // skill.json carries the normalised SPDX id (imports write it); frontmatter may say "Complete terms in LICENSE.txt".
+    license: meta.license || fm.license || null,
     version,
     title: meta.title || titleCase(fm.name || ''),
-    summary: meta.summary || (fm.description || '').slice(0, 140),
+    summary: meta.summary || clip(fm.description || '', 140),
     category,
     tags: Array.isArray(meta.tags) ? meta.tags : [],
     author: meta.author || null,
@@ -145,8 +146,17 @@ export function validateFiles(files) {
   return { ok: errors.length === 0, errors, warnings, manifest };
 }
 
+const ACRONYMS = new Set(['ai', 'api', 'aws', 'aks', 'cli', 'ci', 'cd', 'csv', 'css', 'db', 'dns', 'e2e', 'gcp', 'gpu', 'html', 'http', 'id', 'json', 'llm', 'mcp', 'okr', 'okrs', 'pdf', 'pr', 'qa', 'rest', 'sdk', 'seo', 'sop', 'sql', 'ssh', 'ui', 'url', 'ux', 'xlsx', 'docx', 'pptx', 'b2b', 'saas', 'crm', 'cro']);
 export function titleCase(name) {
-  return name.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  return name.split('-').map((w) => (ACRONYMS.has(w) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1))).join(' ');
+}
+
+/** Shorten at a word boundary with an ellipsis. */
+export function clip(text, n) {
+  const t = String(text).replace(/\s+/g, ' ').trim();
+  if (t.length <= n) return t;
+  const cut = t.slice(0, n - 1);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), n * 0.6)).replace(/[\s,;:.-]+$/, '')}…`;
 }
 
 export function checksum(files) {

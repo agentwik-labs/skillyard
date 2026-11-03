@@ -1,0 +1,10 @@
+{
+  "name": "hiring-scorecard",
+  "version": "1.0.0",
+  "title": "Hiring Scorecard",
+  "summary": "Define a role by mission, outcomes and anchored competencies, then run structured interviews and evidence-based debriefs.",
+  "category": "people",
+  "tags": ["hiring", "recruiting", "interviews", "scorecard", "structured-interview"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

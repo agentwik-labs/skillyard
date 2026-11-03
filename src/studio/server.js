@@ -18,6 +18,14 @@ export function createStudioServer({ port }) {
     'GET /api/skills': () => ({ skills: engine.installedSkills().map(({ dir, ...k }) => ({ ...k, dir: dir.replace(process.env.HOME, '~') })) }),
     'POST /api/consent': (b) => { engine.setConsent(b || {}); return engine.stats(); },
     'POST /api/scan': () => { engine.startJob('scan', async (step) => { step('Reading sessions'); await engine.scan(); }); return { started: true }; },
+    'GET /api/generators': async () => ({ generators: (await import('../generate.js')).GENERATORS }),
+    'POST /api/generate': async (b) => {
+      const g = await import('../generate.js');
+      if (!b?.generator) throw Object.assign(new Error('choose a generator'), { status: 400 });
+      const answers = b.document ? await g.answersFromDocument(b.generator, b.document, { hint: b.hint }) : (b.answers || {});
+      return { answers, built: g.buildSkill(b.generator, answers) };
+    },
+    'POST /api/create': async (b) => engine.createFromGenerator({ generator: b?.generator, answers: b?.answers || {} }),
     'POST /api/notify-test': async () => ({ sent: await engine.notify([], { test: true }) }),
     'POST /api/review': (b) => { engine.startJob('review', (step) => engine.review({ maxProposals: Math.min(Number(b?.max) || 3, 5), onStep: step })); return { started: true }; },
   };
@@ -30,6 +38,9 @@ export function createStudioServer({ port }) {
     };
     try {
       if (!allowedHosts.has(req.headers.host)) return send(421, { error: 'Studio only answers on 127.0.0.1' });
+      if (url.pathname === '/generators.js') {
+        return send(200, fs.readFileSync(path.join(UI_DIR, '..', 'web', 'generators.js')), MIME['.js']);
+      }
       if (!url.pathname.startsWith('/api/')) {
         const rel = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
         const file = path.join(UI_DIR, path.normalize(rel).replace(/^(\.\.[/\\])+/, ''));

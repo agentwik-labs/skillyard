@@ -1,0 +1,10 @@
+{
+  "name": "customer-interview-synthesis",
+  "version": "1.0.0",
+  "title": "Customer Interview Synthesis",
+  "summary": "Turn interview notes into counted, quote-backed themes, jobs to be done, and decisions the team can act on.",
+  "category": "product",
+  "tags": ["customer-research", "interviews", "jtbd", "synthesis", "discovery"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

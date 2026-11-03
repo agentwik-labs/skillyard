@@ -1,0 +1,10 @@
+{
+  "name": "competitive-brief",
+  "version": "1.0.0",
+  "title": "Competitive Brief",
+  "summary": "Write sourced, dated competitive briefs and battlecards that compare on buying criteria and give honest talk tracks.",
+  "category": "marketing",
+  "tags": ["competitive-analysis", "battlecard", "positioning", "sales-enablement", "strategy"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

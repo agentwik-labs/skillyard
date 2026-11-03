@@ -20,6 +20,21 @@ to see two fictional companies' private skills).
 [Do skills actually help? Lift evals](reports/2026-10-lift-evals.md) ·
 [Good skills, bad skills: 12 examples and why](examples/README.md)
 
+## Create skills: builder, generators and skill-writer
+
+Six generators cover the knowledge businesses actually keep: **procedure** (runbooks, month-end close),
+**checklist** (review gates), **voice** (brand and writing), **playbook** (sales and customer plays),
+**decision** (who approves what) and **metric** (how numbers are defined).
+
+```sh
+npx skillyard generate                                   # list generators
+npx skillyard generate decision --from refund-policy.md  # fill one from your own document, with a test case
+```
+
+The same generators run in the [web builder](https://agentwik-labs.github.io/skillyard/#/create) (answer a few
+questions, download a zip; nothing leaves the page) and in Studio's **Create a skill**, where the result is tested and
+waits for approval like every other proposal. The `skill-writer` skill does the same from inside Claude Code or Codex.
+
 ## Studio: your agents learn from your corrections
 
 ```sh
@@ -60,7 +75,7 @@ your team's defect rate for AI work, with the pipeline from corrections to prove
 | **Scan any folder** | `skillyard scan <dir>` finds every skill under a folder (a repo, `~/.claude/skills`) and reports what runs code, talks to the network or hides instructions. |
 | **Project manifest** | `skills.json` lists a project's skills and agents; `skillyard sync` reproduces the set on any machine. |
 | **Claude plugin marketplace** | This repo is a Claude Code marketplace of the open-source skills, and `skillyard export claude-marketplace --scope acme` turns an org's private skills into a marketplace for a private git repo. |
-| **Seed content** | 24 open-source skills in [`registry/public`](registry/public) and two fictional companies with 13 private skills in [`seed/orgs`](seed/orgs). |
+| **Seed content** | 37 open-source skills in [`registry/public`](registry/public), including 12 for running a business (sales calls, outreach, proposals, pricing, investor updates, collections, hiring, SOPs), plus 227 imported community skills and two fictional companies with 13 private skills in [`seed/orgs`](seed/orgs). |
 
 ## Quick start
 

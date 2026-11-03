@@ -236,6 +236,20 @@ details.out pre { white-space: pre-wrap; font-family: var(--mono); font-size: 12
 .opt-score { text-align: right; font-size: 18px; }
 .case-cols.three { grid-template-columns: repeat(3, 1fr); }
 
+.gens { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; }
+.gen { display: grid; gap: 6px; padding: 18px 20px; text-decoration: none; border-left: 1px solid var(--border); border-top: 1px solid var(--border); margin: -1px 0 0 -1px; transition: background .12s; }
+.gen:hover { background: var(--raised); }
+.gen b { font-weight: 600; }
+.gen span { color: var(--muted); font-size: 13.5px; }
+.create { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--gap); align-items: start; }
+.fld { display: grid; gap: 4px; margin-bottom: 14px; }
+.fld > span { font-weight: 500; font-size: 13.5px; }
+.fld small { font-size: 12px; }
+.fld input, .fld textarea { border: 1px solid var(--control); border-radius: var(--radius-control); padding: 8px 10px; font-size: 14px; background: var(--surface); resize: vertical; }
+.fld input:focus, .fld textarea:focus { border-color: var(--accent); outline: none; }
+.preview-pane { position: sticky; top: 0; }
+.preview-pane .diff { max-height: calc(100vh - 260px); }
+
 /* ---- consent ---- */
 .gate { display: grid; grid-template-columns: 1fr auto; gap: 8px 24px; padding: 20px 0; border-bottom: 1px solid var(--rule); align-items: start; }
 .gate:first-of-type { padding-top: 4px; }
@@ -297,6 +311,8 @@ details.out pre { white-space: pre-wrap; font-family: var(--mono); font-size: 12
   .pipe > :nth-child(n+3) { border-top: 1px solid var(--border); }
   .pipe > :last-child { grid-column: 1 / -1; }
   .inbox { grid-template-columns: 1fr; height: auto; overflow: visible; }
+  .gens, .create { grid-template-columns: 1fr; }
+  .preview-pane { position: static; }
   .inbox-list { border-right: 0; border-bottom: 1px solid var(--border); max-height: 320px; }
   .detail { padding: 20px 16px 0; }
   .decide { margin: 20px -16px 0; padding: 12px 16px; }

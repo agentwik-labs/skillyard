@@ -1,0 +1,10 @@
+{
+  "name": "financial-model-review",
+  "version": "1.0.0",
+  "title": "Financial Model Review",
+  "summary": "Audit a financial model's mechanics, drivers and assumptions, and stress-test cash and runway against a downside case.",
+  "category": "finance",
+  "tags": ["financial-model", "forecast", "budget", "runway", "fp-and-a"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

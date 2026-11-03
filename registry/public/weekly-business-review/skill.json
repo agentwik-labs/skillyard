@@ -1,0 +1,10 @@
+{
+  "name": "weekly-business-review",
+  "version": "1.0.0",
+  "title": "Weekly Business Review",
+  "summary": "Build a one-page WBR with week-over-week and vs-plan deltas, explained variances, decisions and owned actions.",
+  "category": "operations",
+  "tags": ["wbr", "kpis", "metrics", "reporting", "operations"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

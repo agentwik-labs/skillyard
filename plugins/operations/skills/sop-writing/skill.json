@@ -1,0 +1,10 @@
+{
+  "name": "sop-writing",
+  "version": "1.0.0",
+  "title": "SOP Writing",
+  "summary": "Write SOPs a new hire can follow first try: trigger, owner, verb-first steps, checks, exceptions and a review date.",
+  "category": "operations",
+  "tags": ["sop", "process", "documentation", "operations", "checklists"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

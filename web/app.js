@@ -3,7 +3,7 @@ const app = document.getElementById('app');
 const ORIGIN = window.SKILLYARD_STATIC ? 'https://skills.your-company.com' : location.origin;
 const CATEGORY_LABELS = {
   engineering: 'Engineering', devops: 'DevOps', testing: 'Testing', security: 'Security', data: 'Data', docs: 'Docs',
-  product: 'Product', ai: 'AI', support: 'Support', sales: 'Sales', compliance: 'Compliance', people: 'People', other: 'Other',
+  product: 'Product', ai: 'AI', support: 'Support', sales: 'Sales', marketing: 'Marketing', finance: 'Finance', operations: 'Operations', compliance: 'Compliance', people: 'People', other: 'Other',
 };
 
 // ---- state & api -------------------------------------------------------------
@@ -172,6 +172,63 @@ function card(s) {
 
 // ---- views -------------------------------------------------------------------
 
+const BUSINESS = ['sales', 'marketing', 'finance', 'operations', 'people', 'product'];
+const BUILDING = ['engineering', 'devops', 'testing', 'security', 'data', 'docs', 'ai'];
+// Hand-picked community skills that are worth installing first (shown when present).
+const PICKS = ['@community/verification-before-completion', '@community/systematic-debugging', '@community/test-driven-development', '@community/brainstorming', '@community/writing-plans', '@community/webapp-testing', '@community/mcp-builder', '@community/frontend-design'];
+
+async function viewShowcase() {
+  const { skills } = await api('/api/skills?limit=1000');
+  const pub = skills.filter((s) => s.visibility === 'public' && !['acme', 'northwind'].includes(s.scope));
+  const sources = {};
+  for (const s of pub) {
+    const key = s.source ? s.source.repo.replace('https://github.com/', '') : 'agentwik-labs/skillyard';
+    (sources[key] ||= { repo: key, url: s.source ? s.source.repo : 'https://github.com/agentwik-labs/skillyard', license: s.source?.license || s.license, skills: [] }).skills.push(s);
+  }
+  const cols = Object.values(sources).sort((a, b) => b.skills.length - a.skills.length);
+  const business = pub.filter((s) => s.scope === 'skillyard' && BUSINESS.includes(s.category));
+  const building = [...PICKS.map((id) => pub.find((s) => s.id === id)).filter(Boolean), ...pub.filter((s) => s.scope === 'skillyard' && BUILDING.includes(s.category))].slice(0, 9);
+  const gens = (await import('./generators.js')).GENERATORS;
+  const mini = (s) => h`<a class="pick" href="${skillHref(s)}"><b>${s.title}</b><span>${s.summary}</span><i class="muted">${s.scope === 'skillyard' ? 'Skillyard' : s.source ? s.source.repo.replace('https://github.com/', '') : `@${s.scope}`} · ${s.license || '—'}</i></a>`;
+  app.innerHTML = h`
+    <section class="show-hero">
+      <h1>Skills worth installing.</h1>
+      <p>${pub.length} open-source skills for AI agents from ${cols.length} source${cols.length === 1 ? "" : "s"}, for running a business and for shipping software. Every one is scanned before it gets here, keeps its licence, and links to the commit it came from. Install any of them into Claude Code, Codex, Cursor or any AGENTS.md agent with one command.</p>
+      <div class="row"><a class="btn primary" href="#/browse">Browse all ${pub.length}</a><a class="btn" href="#/create">Create your own</a></div>
+    </section>
+
+    <section class="show-sec">
+      <div class="section-title"><h2>For running the business</h2><a class="muted" href="#/browse?category=sales">Sales, marketing, finance, operations, hiring</a></div>
+      ${raw(business.length ? `<div class="picks">${business.map(mini).join('')}</div>` : '<div class="empty">Business skills are on their way.</div>')}
+    </section>
+
+    <section class="show-sec">
+      <div class="section-title"><h2>For shipping software</h2><a class="muted" href="#/browse?category=engineering">All engineering skills</a></div>
+      <div class="picks">${raw(building.map(mini).join(''))}</div>
+    </section>
+
+    <section class="show-sec">
+      <div class="section-title"><h2>Collections</h2><span class="muted">Where the open-source skills come from</span></div>
+      <table class="list cols"><thead><tr><th>Source</th><th>Skills</th><th>Licence</th><th>Highlights</th></tr></thead><tbody>
+      ${raw(cols.map((c) => h`<tr><td><a href="#/browse?source=${encodeURIComponent(c.repo)}"><strong>${c.repo}</strong></a> <a class="muted" href="${c.url}" target="_blank" rel="noopener noreferrer">GitHub</a></td><td>${c.skills.length}</td><td>${c.license || '—'}</td><td>${raw(c.skills.slice(0, 4).map((s) => `<a class="tag" href="${skillHref(s)}">${esc(s.name)}</a>`).join(' '))}</td></tr>`).join(''))}
+      </tbody></table>
+    </section>
+
+    <section class="show-sec show-make">
+      <div>
+        <h2>Make your own</h2>
+        <p>Your team's knowledge is the part no public skill has. Pick a generator, answer a few questions or point it at a document you already have, and get a tested skill.</p>
+        <a class="btn primary" href="#/create">Open the skill builder</a>
+      </div>
+      <ul class="gen-list">${raw(gens.map((x) => `<li><a href="#/create?g=${x.id}"><b>${esc(x.title)}</b><span class="muted">${esc(x.summary)}</span></a></li>`).join(''))}</ul>
+    </section>
+
+    <section class="show-sec">
+      <div class="section-title"><h2>Before you install anything</h2><a class="muted" href="#/examples">Twelve good and bad skills, and why</a></div>
+      <p class="muted" style="max-width:720px;margin:0">One in five popular skills ships scripts your agent runs with your permissions. Read how to tell a good skill from a risky one, with the real output of our scanner and tests.</p>
+    </section>`;
+}
+
 async function viewBrowse(params) {
   const q = params.get('q') || '';
   const category = params.get('category') || '';
@@ -182,7 +239,9 @@ async function viewBrowse(params) {
     api('/api/orgs'),
   ]);
   const cats = Object.keys(stats.categories).sort((a, b) => stats.categories[b] - stats.categories[a]);
-  const setParam = (k, v) => { const p = new URLSearchParams(params); v ? p.set(k, v) : p.delete(k); location.hash = `#/?${p}`; };
+  const source = params.get('source');
+  if (source) skills.splice(0, skills.length, ...skills.filter((x) => (x.source ? x.source.repo.replace('https://github.com/', '') : 'agentwik-labs/skillyard') === source));
+  const setParam = (k, v) => { const p = new URLSearchParams(params); v ? p.set(k, v) : p.delete(k); location.hash = `#/browse?${p}`; };
   const mine = !me.anonymous && me.org ? skills.filter((s) => s.scope === me.org) : [];
   const showMine = mine.length && !q && !category && !scope;
 
@@ -211,7 +270,7 @@ async function viewBrowse(params) {
       ${raw(cats.map((c) => `<button type="button" class="chip ${c === category ? 'on' : ''}" data-cat="${esc(c)}">${esc(CATEGORY_LABELS[c] || c)} · ${stats.categories[c]}</button>`).join(''))}
     </div>
     ${raw(showMine ? h`<div class="section-title"><h2>Your organization · @${me.org}</h2><a href="#/orgs/${me.org}" class="muted">Manage</a></div><div class="grid">${raw(mine.map(card).join(''))}</div>` : '')}
-    <div class="section-title"><h2>${q || category || scope ? `${skills.length} result${skills.length === 1 ? '' : 's'}` : 'All skills'}</h2>
+    <div class="section-title"><h2>${source ? `From ${source} · ${skills.length}` : q || category || scope ? `${skills.length} result${skills.length === 1 ? '' : 's'}` : 'All skills'}</h2>
       ${raw(me.anonymous ? '<span class="muted">Sign in with an org token to see private skills</span>' : '')}</div>
     ${raw(skills.length ? `<div class="grid">${skills.filter((s) => !showMine || s.scope !== me.org).map(card).join('')}</div>` : '<div class="empty">No skills match. Try fewer words.</div>')}
   `;
@@ -220,7 +279,7 @@ async function viewBrowse(params) {
     const fd = new FormData(e.target);
     const p = new URLSearchParams(params);
     for (const k of ['q', 'scope']) fd.get(k) ? p.set(k, fd.get(k)) : p.delete(k);
-    location.hash = `#/?${p}`;
+    location.hash = `#/browse?${p}`;
   });
   app.querySelectorAll('[data-cat]').forEach((b) => b.addEventListener('click', () => setParam('category', b.dataset.cat)));
 }
@@ -451,6 +510,117 @@ async function viewExamples(params) {
   app.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => { location.hash = b.dataset.kind ? `#/examples?kind=${b.dataset.kind}` : '#/examples'; }));
 }
 
+// ---- skill builder (no server needed) -------------------------------------------------
+
+let GEN = null;
+const builder = { gen: null, answers: {} };
+
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = (b) => { let c = 0xffffffff; for (const x of b) c = CRC[(c ^ x) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+/** A stored (uncompressed) zip: enough for a folder of small text files. */
+function zip(files) {
+  const enc = new TextEncoder();
+  const parts = [];
+  const central = [];
+  let offset = 0;
+  for (const [name, text] of Object.entries(files)) {
+    const nb = enc.encode(name);
+    const data = enc.encode(text);
+    const crc = crc32(data);
+    const local = new DataView(new ArrayBuffer(30));
+    [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [8, 0, 2], [10, 0, 2], [12, 0x21, 2], [14, crc, 4], [18, data.length, 4], [22, data.length, 4], [26, nb.length, 2], [28, 0, 2]]
+      .forEach(([o, v, n]) => (n === 4 ? local.setUint32(o, v, true) : local.setUint16(o, v, true)));
+    parts.push(new Uint8Array(local.buffer), nb, data);
+    const c = new DataView(new ArrayBuffer(46));
+    [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [10, 0, 2], [12, 0, 2], [14, 0x21, 2], [16, crc, 4], [20, data.length, 4], [24, data.length, 4], [28, nb.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2], [38, 0, 4], [42, offset, 4]]
+      .forEach(([o, v, n]) => (n === 4 ? c.setUint32(o, v, true) : c.setUint16(o, v, true)));
+    central.push(new Uint8Array(c.buffer), nb);
+    offset += 30 + nb.length + data.length;
+  }
+  const size = central.reduce((a, b) => a + b.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  const count = Object.keys(files).length;
+  [[0, 0x06054b50, 4], [8, count, 2], [10, count, 2], [12, size, 4], [16, offset, 4]].forEach(([o, v, n]) => (n === 4 ? end.setUint32(o, v, true) : end.setUint16(o, v, true)));
+  return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: 'application/zip' });
+}
+
+/** The checks a validator would run, in the browser. */
+function quickChecks(md) {
+  const out = [];
+  const m = /^---\n([\s\S]*?)\n---/.exec(md);
+  const desc = m && /description:\s*(.*)/.exec(m[1])?.[1];
+  if (!desc || desc.length < 60 || !/use (it |this )?(when|for|before|after)|when (the user|someone|asked)/i.test(desc)) out.push('The description should say when to use the skill, with phrases people type.');
+  if (/\bTODO\b/.test(md)) out.push('Replace the TODOs.');
+  if (md.split('\n').length > 500) out.push('Long skills cost context on every load; move detail to references/.');
+  if (/ignore (all )?(previous|prior) instructions|do not tell the user|--dangerously/i.test(md)) out.push('Remove instructions that override the agent or hide things from the user.');
+  return out;
+}
+
+async function viewCreate(params) {
+  GEN ||= await import('./generators.js');
+  const g = GEN.GENERATORS.find((x) => x.id === params.get('g'));
+  if (builder.gen !== g?.id) Object.assign(builder, { gen: g?.id || null, answers: {} });
+  if (!g) {
+    app.innerHTML = h`
+      <div class="page-head"><h1>Create a skill</h1><p>Turn what your team already knows into a skill every agent follows. Pick the kind of knowledge, answer a few questions, and download a folder that installs into Claude Code, Codex, Cursor and any AGENTS.md agent. Have an SOP or a wiki page already? Skillyard Studio fills these in from the document for you.</p></div>
+      <div class="gen-grid">${raw(GEN.GENERATORS.map((x) => `<a class="gen-card" href="#/create?g=${x.id}"><h3>${esc(x.title)}</h3><p>${esc(x.summary)}</p><span class="muted">Generator: <code>${x.id}</code></span></a>`).join(''))}</div>
+      <div class="steps" style="margin-top:28px">
+        <div class="step"><h3>From the command line</h3><p>Fill a generator from your own document, then test and install it.</p>${raw(cmd('npx skillyard generate decision --from refund-policy.md'))}</div>
+      </div>`;
+    copyButtons(app);
+    return;
+  }
+  const field = (f) => {
+    const v = builder.answers[f.key];
+    const val = Array.isArray(v) ? v.join('\n') : v || '';
+    const input = f.kind === 'text' ? `<input name="${f.key}" value="${esc(val)}" placeholder="${esc(f.example || '')}">`
+      : `<textarea name="${f.key}" rows="${f.kind === 'list' ? 4 : 3}" placeholder="${esc(f.example || (f.kind === 'list' ? 'One per line' : ''))}">${esc(val)}</textarea>`;
+    return `<label class="fld"><span>${esc(f.label)}${f.required ? '' : ' <i class="muted">optional</i>'}</span>${f.help ? `<small class="muted">${esc(f.help)}</small>` : ''}${input}</label>`;
+  };
+  app.innerHTML = h`
+    <div class="crumbs"><a href="#/create">Create a skill</a> / ${g.title}</div>
+    <div class="page-head"><h1>${g.title}</h1><p>${g.summary}</p></div>
+    <div class="builder">
+      <form id="bform">${raw(g.fields.map(field).join(''))}</form>
+      <div class="bpreview">
+        <div class="panel"><h3>Preview</h3><pre class="skillmd" id="bmd"></pre>
+          <div id="bnotes"></div>
+          <div class="row" style="margin-top:12px"><button class="primary" type="button" id="bzip">Download .zip</button><button type="button" id="bcopy">Copy SKILL.md</button></div>
+          <p class="muted" style="font-size:13px;margin:10px 0 0">Unzip into your repo, then <code>npx skillyard install ./${raw('<span id="bname">skill</span>')} --agent all</code>. Your answers never leave this page.</p>
+        </div>
+      </div>
+    </div>`;
+  const update = () => {
+    const r = GEN.generate(g.id, builder.answers);
+    builder.built = r;
+    document.getElementById('bmd').textContent = r.files['SKILL.md'];
+    document.getElementById('bname').textContent = r.name;
+    const notes = [...r.missing.map((m) => `Still needed: ${m}`), ...quickChecks(r.files['SKILL.md'])];
+    if (!r.files['evals/evals.json']) notes.push('Add a real request and the checks a good answer must pass, and it ships with a test.');
+    document.getElementById('bnotes').innerHTML = notes.length ? `<ul class="bnotes">${notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '<p class="bok">Passes the format checks and ships with a test.</p>';
+    document.getElementById('bzip').disabled = r.missing.length > 0;
+  };
+  document.getElementById('bform').addEventListener('input', (e) => {
+    const f = g.fields.find((x) => x.key === e.target.name);
+    if (f) builder.answers[f.key] = f.kind === 'list' ? e.target.value.split('\n') : e.target.value;
+    update();
+  });
+  document.getElementById('bzip').addEventListener('click', () => {
+    const r = builder.built;
+    const files = Object.fromEntries(Object.entries(r.files).map(([k, v]) => [`${r.name}/${k}`, v]));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(zip(files));
+    a.download = `${r.name}.zip`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  });
+  document.getElementById('bcopy').addEventListener('click', async (e) => {
+    try { await navigator.clipboard.writeText(builder.built.files['SKILL.md']); e.target.textContent = 'Copied'; } catch { e.target.textContent = 'Select and copy'; }
+    setTimeout(() => { e.target.textContent = 'Copy SKILL.md'; }, 1400);
+  });
+  update();
+}
+
 function viewTeams() {
   const tiers = [
     ['Self-host', 'Free', 'Run Skillyard yourself. Private org skills, tokens, scan on publish, MCP, installs for Claude Code, Codex, Cursor and AGENTS.md agents. MIT licensed.', 'Get the code', 'https://github.com/agentwik-labs/skillyard'],
@@ -524,7 +694,7 @@ async function route() {
   const params = new URLSearchParams(query);
   document.querySelectorAll('.top nav a').forEach((a) => {
     const target = a.getAttribute('href').slice(1);
-    a.classList.toggle('on', target === '/' ? pathPart === '/' || pathPart.startsWith('/skill') : pathPart.startsWith(target));
+    a.classList.toggle('on', target === '/' ? pathPart === '/' : target === '/browse' ? pathPart.startsWith('/browse') || pathPart.startsWith('/skill') : pathPart.startsWith(target));
   });
   try {
     let m;
@@ -534,8 +704,10 @@ async function route() {
     else if (pathPart === '/connect') viewConnect();
     else if (pathPart === '/publish') viewPublish();
     else if (pathPart === '/teams') viewTeams();
+    else if (pathPart === '/create') await viewCreate(params);
     else if (pathPart === '/examples') await viewExamples(params);
-    else await viewBrowse(params);
+    else if (pathPart === '/browse') await viewBrowse(params);
+    else await viewShowcase();
     document.title = `${document.querySelector('main h1')?.textContent?.slice(0, 60) || 'Skillyard'} · Skillyard`;
     if (pathPart === '/') document.title = 'Skillyard';
   } catch (e) {

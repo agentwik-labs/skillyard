@@ -1,0 +1,10 @@
+{
+  "name": "cold-outreach-email",
+  "version": "1.0.0",
+  "title": "Cold Outreach Email",
+  "summary": "Write short, specific cold emails and follow-up sequences with a real reason to reach out and one small ask.",
+  "category": "sales",
+  "tags": ["sales", "outbound", "email", "prospecting", "copywriting"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

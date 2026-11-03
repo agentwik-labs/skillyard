@@ -1,0 +1,10 @@
+{
+  "name": "sales-discovery-call",
+  "version": "1.0.0",
+  "title": "Sales Discovery Call",
+  "summary": "Prep a discovery call question plan, then debrief it into an evidence-based qualification and a dated next step.",
+  "category": "sales",
+  "tags": ["sales", "discovery", "qualification", "b2b", "call-prep"],
+  "license": "MIT",
+  "author": "Skillyard Community"
+}

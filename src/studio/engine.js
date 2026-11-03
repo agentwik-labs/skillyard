@@ -509,6 +509,52 @@ export async function findAlternatives(id, { model, runs = 2, onStep = () => {} 
   return alternatives;
 }
 
+/** Turn a generator's answers into a proposal (origin "created") and test it in the background like any other. */
+export async function createFromGenerator({ generator, answers, model }) {
+  const { buildSkill } = await import('../generate.js');
+  const r = buildSkill(generator, answers, { license: 'Proprietary' });
+  if (r.errors.length || r.missing.length) throw Object.assign(new Error([...r.errors, ...r.missing.map((m) => `missing: ${m}`)].join('; ')), { status: 422 });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'skillyard-draft-'));
+  for (const [rel, text] of Object.entries(r.files)) {
+    fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+    fs.writeFileSync(path.join(dir, rel), text);
+  }
+  const s = loadState();
+  const files = readSkillDir(dir);
+  const sc = scanFiles(files);
+  const p = {
+    id: crypto.randomBytes(5).toString('hex'), origin: 'created', generator,
+    title: `${answers.job || answers.reviews || answers.situation || answers.decision || answers.report || answers.audience || r.name}`.slice(0, 140),
+    problem: 'Created in Studio from a generator.', summary: '', kind: 'new', skill: r.name, target: null, evidence: [],
+    before: null, after: r.files['SKILL.md'], checks: { valid: true, errors: [], warnings: r.warnings, scan: sc.findings, blocked: sc.critical > 0 },
+    eval: null, draftDir: dir, status: 'pending', createdAt: new Date().toISOString(),
+  };
+  s.proposals.unshift(p);
+  record(s, 'Created a skill from a generator', `${r.name} (${generator})`);
+  saveState(s);
+  const cases = r.files['evals/evals.json'] ? JSON.parse(r.files['evals/evals.json']).cases : [];
+  if (cases.length) {
+    startJob('test', async (step) => {
+      step(`Testing ${r.name} (${cases.length * 2 * 2} runs)`);
+      const m = model || s.consent.modelReview.model || 'haiku';
+      const result = await evalSkill(dir, { model: m, runs: 2, cases, tools: ['Skill'] });
+      const t = loadState();
+      const q = t.proposals.find((x) => x.id === p.id);
+      q.eval = {
+        model: result.model, judge: process.env.SKILLYARD_JUDGE_MODEL || 'sonnet', runs: 2, baselineLabel: 'No skill',
+        baseline: result.baseline, candidate: result.withSkill, lift: result.lift,
+        cases: cases.map((c) => ({
+          name: c.name, prompt: c.prompt, checks: c.checks,
+          before: result.cases.filter((x) => x.case === c.name && x.condition === 'without' && !x.error).map((x) => ({ score: x.score, checks: x.checks, output: x.output.slice(0, 1500) })),
+          after: result.cases.filter((x) => x.case === c.name && x.condition === 'with' && !x.error).map((x) => ({ score: x.score, checks: x.checks, output: x.output.slice(0, 1500) })),
+        })),
+      };
+      saveState(t);
+    });
+  }
+  return p;
+}
+
 export function startJob(kind, fn) {
   if (job && !job.finishedAt) throw Object.assign(new Error('A review is already running'), { status: 409 });
   job = { kind, step: 'Starting', log: [], startedAt: new Date().toISOString() };
