@@ -774,9 +774,12 @@ async function studio(args, f) {
     state.proposals = state.proposals.map(scrub);
     const diffs = Object.fromEntries(state.proposals.filter((p) => p.before).map((p) => [p.id, engine.diffLines(p.before, p.after)]));
     const skills = engine.installedSkills().map(({ dir, ...k }) => k);
-    const json = JSON.stringify({ state, skills, diffs, preview: engine.preview() });
+    // Agents mention their own temp folders in answers; those are machine details too.
+    const json = JSON.stringify({ state, skills, diffs, preview: engine.preview() })
+      .replace(/\/(?:private\/)?(?:tmp|var\/folders)\/[^\s"`'()\\]+/g, '<temp folder>')
+      .replace(/-private-var-folders-[^\s"`'()\\]+/g, '<temp folder>');
     // A public demo must never carry anything from the machine it was made on.
-    const leaks = [os.homedir(), '/var/folders/', '/private/var/', os.userInfo().username].filter((x) => x && json.includes(x));
+    const leaks = [os.homedir(), '/var/folders/', '/private/var/', '/private/tmp/', 'var-folders', os.userInfo().username].filter((x) => x && json.includes(x));
     if (leaks.length) throw new Error(`snapshot contains local details (${leaks.length}); not writing a public demo`);
     fs.writeFileSync(out, json);
     console.log(`wrote read-only Studio demo snapshot to ${tilde(out)}`);

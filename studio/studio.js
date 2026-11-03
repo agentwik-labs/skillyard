@@ -70,6 +70,7 @@ async function refresh() {
 
 function renderJob() {
   const el = document.getElementById('job');
+  if (STATIC) { el.innerHTML = '<span>Demo snapshot</span>'; return; }
   const j = S?.job;
   if (j && !j.finishedAt) {
     el.innerHTML = `<i class="spin" aria-hidden="true"></i><span>${esc(j.step)}${j.total ? ` · ${nf.format(j.done || 0)} of ${nf.format(j.total)} sessions` : ''}</span>`;
