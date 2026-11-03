@@ -16,5 +16,5 @@ jobs:
           node-version: 22
       - name: Format check and security scan
         run: |
-          npx -y https://github.com/agentwik-labs/skillyard/archive/refs/heads/main.tar.gz validate skills
-          npx -y https://github.com/agentwik-labs/skillyard/archive/refs/heads/main.tar.gz scan skills
+          npx -y skillyard validate skills
+          npx -y skillyard scan skills

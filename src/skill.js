@@ -96,10 +96,13 @@ export function validateFiles(files) {
   else if (fm.description.length > 1024) errors.push('frontmatter: description must be <= 1024 chars');
   else {
     // The description is the only thing an agent reads before deciding to load a skill.
-    if (fm.description.length < 60 || !/\b(?:use (?:it |this )?(?:when|for|before|after|whenever)|when (?:the user|someone|asked|you)|trigger)/i.test(fm.description)) {
+    // Real descriptions say "when" many ways: "Use X when…", "INVOKE THIS SKILL before…", "Triggers on…", "Use to…".
+    const SAYS_WHEN = /\b(?:use|invoke|run|apply|load|call)\b[^.]{0,80}?\s(?:when|whenever|before|after|for|to|if|on)\s|\bwhen (?:the user|someone|asked|you|a |an )|\btrigger(?:s|ed)?\b|\bbefore (?:any|every|each|creating|committing|opening|merging)\b/i;
+    if (fm.description.length < 40 || !SAYS_WHEN.test(fm.description)) {
       warnings.push('description does not say when to use the skill; agents decide to load a skill from its description alone');
     }
-    if (/\b(?:every|all|any)\s+(?:task|request|prompt|conversation|message)s?\b|\balways (?:load|use|apply) (?:this|it)\b/i.test(fm.description)) {
+    // "Use this for every task" is a hijack; "Triggers on any request to open a PR" is scoped and fine.
+    if (/\b(?:every|all|any)\s+(?:task|request|prompt|conversation|message)s?\b(?!\s+(?:to|that|about|for|involving|where|which|with)\b)|\balways (?:load|use|apply) (?:this|it)\b(?!\s+(?:when|before|for)\b)/i.test(fm.description)) {
       warnings.push('description claims every task; a skill that triggers on everything crowds out the right one');
     }
   }

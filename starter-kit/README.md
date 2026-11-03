@@ -4,7 +4,7 @@ Get your team's AI agents (Claude Code, Codex, Cursor, anything that reads AGENT
 actually works. Plan on about three hours of total team time over two weeks.
 
 ```sh
-npx -y https://github.com/agentwik-labs/skillyard/archive/refs/heads/main.tar.gz kit .   # copies this kit into your repo
+npx -y skillyard kit .   # copies this kit into your repo
 ```
 
 ## What you get
@@ -28,9 +28,9 @@ npx -y https://github.com/agentwik-labs/skillyard/archive/refs/heads/main.tar.gz
 **Week 2**
 3. Each owner copies `templates/new-skill/` to `skills/<name>/` and writes their skill: 40–120 lines, rules a model couldn't guess.
 4. Each owner adds 1–3 eval cases (a real task plus checks) and runs:
-   `npx … eval skills/<name> --model haiku --runs 3`. Keep the skill if the score goes up; rewrite it if not.
+   `npx skillyard eval skills/<name> --model haiku --runs 3`. Keep the skill if the score goes up; rewrite it if not.
 5. Open a PR. A teammate reviews it with `REVIEW.md`; CI runs the format check and scan.
-6. Merge, then everyone runs: `npx … install ./skills/* --agent claude,codex,cursor` (or `--agent all`).
+6. Merge, then everyone runs: `npx skillyard install ./skills/* --agent claude,codex,cursor` (or `--agent all`).
 
 **Every month (15 minutes)**
 - The owner re-runs the evals after model upgrades. Skills that stopped helping get cut: they cost context on

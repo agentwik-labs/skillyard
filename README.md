@@ -121,7 +121,7 @@ See [docs/agents.md](docs/agents.md) for where each agent reads skills and how e
 ## Roll it out to your team
 
 ```sh
-npx -y https://github.com/agentwik-labs/skillyard/archive/refs/heads/main.tar.gz kit .
+npx -y skillyard kit .
 ```
 
 Copies the [team starter kit](starter-kit/README.md) into your repo: a two-week plan, a 30-minute kickoff agenda,

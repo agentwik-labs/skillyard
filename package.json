@@ -11,7 +11,12 @@
     "src",
     "web",
     "studio",
-    "starter-kit"
+    "starter-kit",
+    "registry",
+    "seed",
+    "sources",
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=20"
@@ -24,5 +29,24 @@
     "validate": "node bin/skillyard.js validate registry/public seed/orgs/*/skills",
     "build:marketplace": "node bin/skillyard.js export claude-marketplace --out ."
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agentwik-labs/skillyard.git"
+  },
+  "homepage": "https://agentwik-labs.github.io/skillyard/",
+  "bugs": {
+    "url": "https://github.com/agentwik-labs/skillyard/issues"
+  },
+  "keywords": [
+    "agent-skills",
+    "claude-code",
+    "codex",
+    "cursor",
+    "mcp",
+    "skills",
+    "ai-agents",
+    "agents-md",
+    "llm"
+  ]
 }
