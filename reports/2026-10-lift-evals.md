@@ -63,3 +63,5 @@ is graded by fixed checks in the skill's `evals/evals.json` (no AI judge). Lift 
 
 Limits: tiny sample (1 task, 2 runs each), one model, deterministic regex checks that can miss a good answer phrased
 differently. Your own skills, models and tasks will differ, which is the point: measure them.
+
+_Setup note (added Oct 30): these runs used the author's normal Claude Code setup, so personal instructions and memory were loaded in both conditions. `skillyard eval` now runs locked down (no shell, edit, web or MCP tools; reads confined to the test folder; `--bare` when an API key is set), so reruns may differ slightly._

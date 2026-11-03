@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skillyard Studio</title>
+  <link rel="icon" href="mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="studio.css">
+</head>
+<body>
+  <div class="frame">
+    <aside class="side" id="side">
+      <a class="brand" href="#/"><img src="mark.svg" alt="" width="22" height="22"><span>Skillyard <b>Studio</b></span></a>
+      <div class="scope" id="scope">This Mac</div>
+      <nav class="nav" aria-label="Studio">
+        <a href="#/" data-nav="overview"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13V7m4 6V3m4 10V9m4 4V5"/></svg>Overview</a>
+        <a href="#/proposals" data-nav="proposals"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12v8H2zM2 4l6 5 6-5"/></svg>Proposals<span class="count" id="nav-pending"></span></a>
+        <a href="#/projects" data-nav="projects"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h4l1.5 1.5H14v6.5H2z"/></svg>Projects</a>
+        <a href="#/themes" data-nav="themes"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4h10M3 8h7M3 12h4"/></svg>Themes</a>
+        <a href="#/corrections" data-nav="corrections"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h10v7H8l-3 3v-3H3z"/></svg>Corrections</a>
+        <a href="#/skills" data-nav="skills"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2h7l3 3v9H3zM10 2v3h3"/></svg>Skills</a>
+        <div class="nav-group">Settings</div>
+        <a href="#/privacy" data-nav="privacy"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l5 2v4c0 3-2 5-5 6-3-1-5-3-5-6V4z"/></svg>Privacy and consent</a>
+      </nav>
+      <p class="side-note" id="side-note">Local only. Nothing leaves this Mac without your OK.</p>
+    </aside>
+    <header class="top">
+      <button class="menu" id="menu" type="button" aria-label="Menu"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+      <div class="crumb" id="crumb"></div>
+      <div class="job" id="job" role="status" aria-live="polite"></div>
+    </header>
+    <main class="sheet" id="app" tabindex="-1"></main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="charts.js"></script>
+  <script src="static.js"></script>
+  <script type="module" src="studio.js"></script>
+</body>
+</html>

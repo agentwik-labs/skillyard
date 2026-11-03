@@ -1,0 +1,19 @@
+{
+  "note": "Public skill repositories Skillyard imports into @community. Only permissively licensed skills are taken, each with its licence file and a link to its source commit. Copies of other repositories are not listed.",
+  "sources": [
+    "anthropics/skills",
+    "vercel-labs/agent-skills",
+    "obra/superpowers",
+    "mattpocock/skills",
+    "supabase/agent-skills",
+    "neondatabase/agent-skills",
+    "prisma/skills",
+    "remotion-dev/skills",
+    "emilkowalski/skills",
+    "coreyhaines31/marketingskills",
+    "microsoft/azure-skills",
+    "pbakaus/impeccable",
+    "leonxlnx/taste-skill",
+    "juliusbrussee/caveman"
+  ]
+}

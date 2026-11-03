@@ -11,9 +11,22 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { installBundle } from './agents.js';
 import { readSkillDir, validateFiles, checksum } from './skill.js';
+import { judge, agentFailure } from './studio/llm.js';
+
+// Eval runs must stay inside their temp folder whatever the user's own permission mode is (a user in bypass mode
+// would otherwise hand the eval agent their whole machine): explicit default mode, reads confined to the folder,
+// and shell, edit, web and sub-agent tools blocked. With an API key, --bare also skips the user's memory and hooks.
+export const LOCKDOWN = [
+  '--permission-mode', 'default',
+  // No MCP servers: the user's Slack, Docs or browser connections must never be reachable from an eval.
+  '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}',
+  '--disallowedTools', 'Bash', 'Edit', 'Write', 'NotebookEdit', 'WebFetch', 'WebSearch', 'Task', 'Agent', 'Glob', 'Grep',
+  ...(process.env.ANTHROPIC_API_KEY ? ['--bare'] : []),
+];
+const confine = (t) => (t === 'Read' ? 'Read(./**)' : t);
 
 const RUNNERS = {
-  claude: (prompt, model, tools = ['Read', 'Glob', 'Grep', 'Skill']) => ['claude', ['-p', prompt, '--output-format', 'text', '--allowedTools', ...tools, ...(model ? ['--model', model] : [])]],
+  claude: (prompt, model, tools = ['Read', 'Skill']) => ['claude', ['-p', prompt, '--output-format', 'text', ...LOCKDOWN, '--tools', ...tools.map((t) => t.replace(/\(.*$/, '')), '--allowedTools', ...tools.map(confine), ...(model ? ['--model', model] : [])]],
   codex: (prompt, model) => ['codex', ['exec', '--skip-git-repo-check', '--sandbox', 'read-only', ...(model ? ['-m', model] : []), prompt]],
 };
 
@@ -23,6 +36,15 @@ export function loadEvals(skillDir) {
   const spec = JSON.parse(fs.readFileSync(p, 'utf8'));
   if (!Array.isArray(spec.cases) || !spec.cases.length) throw new Error(`${p} has no cases`);
   return spec.cases;
+}
+
+export async function gradeAsync(output, checks, { judgeModel = process.env.SKILLYARD_JUDGE_MODEL || 'sonnet' } = {}) {
+  const out = [];
+  for (const c of checks) {
+    if (c.type === 'judge') out.push({ label: c.label || c.value, pass: output.trim() ? await judge(output, c.value, { model: judgeModel }) : false });
+    else out.push(grade(output, [c])[0]);
+  }
+  return out;
 }
 
 export function grade(output, checks) {
@@ -53,18 +75,23 @@ function run(cmd, args, cwd, timeoutMs) {
 }
 
 /** Run every case with and without the skill. Returns { skill, agent, model, cases: [...], baseline, withSkill, lift }. */
-export async function evalSkill(skillDir, { agent = 'claude', model, tools, runs = 1, timeoutMs = 240000, log = () => {} } = {}) {
+export async function evalSkill(skillDir, { agent = 'claude', model, tools, baselineDir, cases: casesOverride, runs = 1, timeoutMs = 240000, log = () => {} } = {}) {
   if (!RUNNERS[agent]) throw new Error(`eval supports agents: ${Object.keys(RUNNERS).join(', ')}`);
   const files = readSkillDir(skillDir);
   const v = validateFiles(files);
   if (!v.ok) throw new Error(`invalid skill: ${v.errors.join('; ')}`);
-  const cases = loadEvals(skillDir);
+  const cases = casesOverride || loadEvals(skillDir);
   // The agent must not see the evals (answer key) when the skill is installed.
-  const shipped = Object.fromEntries(Object.entries(files).filter(([k]) => !k.startsWith('evals/')));
-  const bundle = {
-    id: `@local/${v.manifest.name}`, name: v.manifest.name, version: v.manifest.version, checksum: checksum(shipped),
-    files: Object.fromEntries(Object.entries(shipped).map(([k, b]) => [k, b.toString('base64')])),
+  const toBundle = (fl, name, version) => {
+    const shipped = Object.fromEntries(Object.entries(fl).filter(([k]) => !k.startsWith('evals/')));
+    return {
+      id: `@local/${name}`, name, version, checksum: checksum(shipped),
+      files: Object.fromEntries(Object.entries(shipped).map(([k, b]) => [k, b.toString('base64')])),
+    };
   };
+  const bundle = toBundle(files, v.manifest.name, v.manifest.version);
+  // With a baseline skill (an improvement to an existing skill), "without" means "with the current version".
+  const baselineBundle = baselineDir ? toBundle(readSkillDir(baselineDir), v.manifest.name, 'current') : null;
   const results = [];
   for (const c of cases) {
     for (const condition of ['without', 'with']) {
@@ -75,10 +102,20 @@ export async function evalSkill(skillDir, { agent = 'claude', model, tools, runs
           fs.writeFileSync(path.join(cwd, rel), content);
         }
         if (condition === 'with') installBundle(agent === 'codex' ? 'codex' : 'claude', bundle, { cwd });
+        else if (baselineBundle) installBundle(agent === 'codex' ? 'codex' : 'claude', baselineBundle, { cwd });
         const [cmd, args] = RUNNERS[agent](c.prompt, model, tools);
         const started = Date.now();
         const res = await run(cmd, args, cwd, timeoutMs);
-        const checks = grade(res.out, c.checks);
+        const failure = agentFailure(res.code, res.out, res.err);
+        if (failure) {
+          // A run that never happened is not a zero. Record it, keep it out of the averages.
+          results.push({ case: c.name, condition, run: r, error: failure, seconds: Math.round((Date.now() - started) / 1000), exit: res.code, output: '' });
+          log(`${v.manifest.name} · ${c.name} · ${condition} skill · not run (${failure})`);
+          fs.rmSync(cwd, { recursive: true, force: true });
+          if (/subscription|past due|logged in|login|Credit balance|Invalid API key/i.test(failure)) throw Object.assign(new Error(failure), { agentFailure: true });
+          continue;
+        }
+        const checks = await gradeAsync(res.out, c.checks);
         const score = checks.filter((x) => x.pass).length / checks.length;
         results.push({ case: c.name, condition, run: r, score, checks, seconds: Math.round((Date.now() - started) / 1000), exit: res.code, output: res.out.slice(0, 4000) });
         log(`${v.manifest.name} · ${c.name} · ${condition} skill · ${Math.round(score * 100)}% (${checks.filter((x) => x.pass).length}/${checks.length})`);
@@ -87,7 +124,8 @@ export async function evalSkill(skillDir, { agent = 'claude', model, tools, runs
     }
   }
   const avg = (cond) => {
-    const xs = results.filter((x) => x.condition === cond).map((x) => x.score);
+    const xs = results.filter((x) => x.condition === cond && !x.error).map((x) => x.score);
+    if (!xs.length) throw new Error(`no ${cond}-skill run completed: ${results.find((x) => x.error)?.error || 'unknown error'}`);
     return xs.reduce((a, b) => a + b, 0) / xs.length;
   };
   const baseline = avg('without');

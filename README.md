@@ -20,6 +20,33 @@ to see two fictional companies' private skills).
 [Do skills actually help? Lift evals](reports/2026-10-lift-evals.md) ·
 [Good skills, bad skills: 12 examples and why](examples/README.md)
 
+## Studio: your agents learn from your corrections
+
+```sh
+npx skillyard studio          # http://127.0.0.1:7430, local only
+npx skillyard studio --demo   # try it on a fictional team's data first
+```
+
+Every time someone tells an agent "no, we use pnpm here" or "I didn't ask for that", it's a free test case.
+Studio turns those moments into skills that stop the mistake from coming back, and proves each one works:
+
+1. **Find.** Reads Claude Code and Codex session logs on your machine and spots corrections. Keeps only the
+   redacted moment (emails, keys, tokens, long numbers and your home path removed).
+2. **Propose.** Groups corrections that repeat into themes, then drafts a new skill or an edit to one you already
+   use, with test cases built from the real requests where the agent went wrong.
+3. **Prove.** Runs each draft with and without (or against the current version of the skill) and grades the
+   answers. You see the before and after, the diff, and the corrections that led to it.
+4. **You decide.** Approve to install into Claude Code and/or Codex, edit first, or reject (it won't be proposed
+   again). Every approval keeps a backup and can be undone.
+
+**Consent is the product.** Three separate switches, all off until you turn them on: reading logs, letting a model
+review redacted excerpts (through your own Claude Code login; you can see exactly what would be sent), and
+reviewing on a schedule. Projects can be left out (work for an employer or client). Turning reading off deletes
+everything Studio read. Nothing is ever installed without an explicit approval, and every decision is logged.
+
+The overview tracks the number engineering leads ask for: **corrections per 100 prompts, by week**. Think of it as
+your team's defect rate for AI work, with the pipeline from corrections to proven skills next to it.
+
 ## What's in the box
 
 | | |

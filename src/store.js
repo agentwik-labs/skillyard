@@ -254,6 +254,7 @@ export class Store {
       downloads: rec.downloads || 0,
       updatedAt: rec.updatedAt,
       scanWarnings: rec.versions[rec.latest].scan?.warning ?? null,
+      source: rec.source || null,
     };
   }
 

@@ -281,6 +281,7 @@ async function viewSkill(id, filePath) {
             <dt>Version</dt><dd>${s.version}${raw(s.versions.length > 1 ? ` <span class="muted">(${s.versions.length} versions)</span>` : '')}</dd>
             <dt>Publisher</dt><dd><a href="#/orgs/${s.scope}">@${s.scope}</a></dd>
             <dt>Author</dt><dd>${s.author || '—'}</dd>
+            ${raw(s.source ? h`<dt>Source</dt><dd><a href="${s.source.repo}/tree/${s.source.commit}/${s.source.path}" target="_blank" rel="noopener noreferrer">${s.source.repo.replace('https://github.com/', '')}</a> <span class="muted mono" style="font-size:11.5px">${s.source.commit.slice(0, 7)}</span></dd>` : '')}
             <dt>License</dt><dd>${s.license || '—'}</dd>
             <dt>Updated</dt><dd>${fmtDate(s.publishedAt)}</dd>
             <dt>Installs</dt><dd>${s.downloads}</dd>
@@ -462,6 +463,7 @@ function viewTeams() {
     <div class="agents-grid">${raw(tiers.map(([name, price, body, cta, href]) => h`<div class="panel" style="display:flex;flex-direction:column;gap:10px"><h3>${name}</h3><div style="font-size:26px;font-weight:600;letter-spacing:-0.02em">${price}</div><p style="margin:0;color:var(--ink-2);flex:1">${body}</p><a class="btn ${name === 'Skills pack' ? 'primary' : ''}" href="${href}" target="_blank" rel="noopener noreferrer" style="align-self:flex-start">${cta}</a></div>`).join(''))}</div>
     <div class="section-title"><h2>Why measure</h2></div>
     <div class="steps">
+      <div class="step"><h3>Your corrections are the spec</h3><p>Every "no, we use pnpm here" your team types to an agent is a test case nobody saved. Skillyard Studio reads agent logs on each laptop (with consent), groups the corrections that repeat, drafts the skill that would have prevented them, tests it against the real requests, and waits for an approval. The weekly number it tracks, corrections per 100 prompts, is the defect rate of your AI work. ${STATIC ? '<a href="studio/">Open the Studio demo.</a>' : ''}</p></div>
       <div class="step"><h3>Skills can make agents worse</h3><p>Research on agent skills found that curated skills help on average, but a meaningful share of tasks got worse with a skill loaded, and self-written skills came out slightly negative. We run every skill we deliver with and without it, on your tasks, and keep only the ones that move the score.</p>${raw(cmd('npx skillyard eval ./skills/deploy-runbook --model haiku --runs 3'))}</div>
       <div class="step"><h3>Skills run code with your permissions</h3><p>One in five popular public skills ships scripts. Skillyard scans every publish for hidden instructions, secrets, remote-code installs and secret exfiltration, and blocks the dangerous ones. <a href="https://github.com/agentwik-labs/skillyard/blob/main/reports/2026-10-top-skills-scan.md">Read our scan of the 34 most-installed skill repos.</a></p></div>
       <div class="step"><h3>One copy for every agent</h3><p>Claude, Codex and Cursor each have their own way to share team skills, and each stops at its own agent. Skillyard keeps one private copy and installs it for all of them, or serves it live over MCP.</p></div>
@@ -574,6 +576,7 @@ document.getElementById('login').addEventListener('close', async (e) => {
   }
 });
 
+if (!STATIC) document.getElementById('studio-link')?.remove();
 if (STATIC) {
   document.querySelector('#login .muted').innerHTML = 'This is a static demo with two fictional companies. Type <code>acme</code> or <code>northwind</code> to see their private skills.';
   document.getElementById('token-input').placeholder = 'acme';

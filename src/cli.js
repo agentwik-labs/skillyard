@@ -30,12 +30,20 @@ Using skills
   list [--agent a,b|all] [-g]                    Show installed skills
   update [--agent a,b|all] [-g]                  Reinstall the newest version of every installed skill
   init                                           Create ./skills.json (a project's skill manifest)
-  sync                                           Install everything in ./skills.json for its agents
+  sync [--quiet]                                 Install everything in ./skills.json for its agents
+  hooks install [--claude] | hooks remove        Keep skills in sync automatically: git post-merge/post-checkout,
+                                                 and with --claude a Claude Code SessionStart hook
+  ci [dirs...]                                   Format check + security scan for CI; writes a PR summary
 
 Connecting agents over MCP
   connect <claude|codex|cursor|vscode|gemini|claude-desktop> [--write]
                                                  Print (or write) the MCP config for an agent
   mcp                                            Run a stdio MCP server against the configured registry
+
+Studio (learns from your agent logs, with your consent)
+  studio [--port 7430]                           Open Studio: correction rate, themes, proposed skill fixes to approve
+  studio review [--max 3]                        Run a review now (for a schedule); needs consent given in Studio
+  studio --demo [--reset]                        Try Studio on a fictional team's data (reads nothing of yours)
 
 Account
   login --registry <url> [--token <token>]       Save registry URL and token (~/.skillyard/config.json)
@@ -53,7 +61,10 @@ Authoring
 
 Running a registry
   serve [--port 7420] [--host 127.0.0.1] [--data ./data] [--log]
-  seed [--data ./data]                           Load registry/public and seed/orgs demo content
+  seed [--data ./data] [--community]             Load registry/public and seed/orgs demo content (+ free public skills)
+  import <owner/repo...> [--scope community] [--data ./data]
+                                                 Import openly licensed skills from public GitHub repos (scanned,
+                                                 licence kept, source recorded); no args = sources/community.json
   org create <slug> [--name "Acme"] [--data ./data]
   token create --org <org> [--scopes read,publish] [--name n] [--data ./data]
   token list --org <org> | token revoke <id>
@@ -69,7 +80,7 @@ export async function main(argv) {
   const cmd = args.shift();
   const cmds = {
     serve, seed, org, token, login, whoami, search, info, install, uninstall: uninstallCmd, list, update, init, sync,
-    new: scaffold, kit, validate, scan: scanCmd, eval: evalCmd, publish, connect, mcp, export: exportCmd,
+    new: scaffold, kit, studio, import: importCmd, hooks, ci, validate, scan: scanCmd, eval: evalCmd, publish, connect, mcp, export: exportCmd,
   };
   if (!cmd || cmd === 'help' || flags.help) return void process.stdout.write(HELP);
   if (cmd === '--version' || cmd === 'version') return void console.log('0.1.0');
@@ -154,6 +165,67 @@ async function seed(_args, f) {
     for (const [o, t] of Object.entries(tokens)) report.push(`  ${o}: ${t}`);
   }
   console.log(report.join('\n'));
+  if (f.community) await importCmd([], f);
+}
+
+async function hooks(args, f) {
+  const { installHooks, removeHooks } = await import('./hooks.js');
+  if (args[0] === 'install') {
+    const done = installHooks({ claude: !!f.claude });
+    console.log(`installed: ${done.join(', ')}\nskills now re-sync after git pull and branch switches${f.claude ? ', and when a Claude Code session starts' : ''}`);
+  } else if (args[0] === 'remove') {
+    const done = removeHooks();
+    console.log(done.length ? `removed skillyard from: ${done.join(', ')}` : 'nothing to remove');
+  } else throw new Error('usage: skillyard hooks install [--claude] | hooks remove');
+}
+
+/** CI gate: validate + scan every skill under the given folders; markdown summary to $GITHUB_STEP_SUMMARY. */
+async function ci(args) {
+  const roots = args.length ? args : ['skills', '.claude/skills'].filter((d) => fs.existsSync(d));
+  const dirs = [];
+  const walk = (d, depth) => {
+    if (depth > 6 || !fs.existsSync(d)) return;
+    if (fs.existsSync(path.join(d, 'SKILL.md'))) { dirs.push(d); return; }
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) if (e.isDirectory() && !['node_modules', '.git'].includes(e.name)) walk(path.join(d, e.name), depth + 1);
+  };
+  roots.forEach((r) => walk(r, 0));
+  const rows = [];
+  let failed = 0;
+  for (const d of dirs) {
+    const files = readSkillDir(d);
+    const v = validateFiles(files);
+    const s = scanFiles(files);
+    const bad = !v.ok || s.critical > 0;
+    if (bad) failed++;
+    const notes = [...v.errors, ...s.findings.map((x) => `${x.severity}: ${x.file}:${x.line} ${x.message}`), ...v.warnings].slice(0, 4);
+    rows.push(`| ${bad ? '❌' : notes.length ? '⚠️' : '✅'} | \`${d}\` | ${notes.map((n) => n.replace(/\|/g, '\\|')).join('<br>') || 'clean'} |`);
+    console.log(`${bad ? 'FAIL' : notes.length ? 'warn' : 'ok  '} ${d}${notes.map((n) => `\n     - ${n}`).join('')}`);
+  }
+  const md = [`### Skillyard: ${dirs.length} skill(s) checked, ${failed} failing`, '', '| | Skill | Findings |', '|---|---|---|', ...rows, ''].join('\n');
+  if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
+  if (!dirs.length) console.log('no skills found');
+  if (failed) process.exitCode = 1;
+}
+
+async function importCmd(args, f) {
+  const { importSource } = await import('./importer.js');
+  const store = new Store(dataDir(f));
+  const scope = f.scope || 'community';
+  if (!store.getOrg(scope)) store.createOrg({ slug: scope, name: scope === 'community' ? 'Community (imported)' : scope, description: 'Openly licensed skills imported from public repositories, with their licences and sources.' });
+  const list = args.length ? args : JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'sources', 'community.json'), 'utf8')).sources;
+  let total = 0;
+  for (const src of list) {
+    try {
+      const r = importSource(store, src, { scope, auth: ADMIN });
+      total += r.imported.length;
+      const reasons = {};
+      for (const x of r.skipped) { const k = x.reason.replace(/ of .*| from .*/, ''); reasons[k] = (reasons[k] || 0) + 1; }
+      console.log(`${src}: ${r.imported.length} imported, ${r.unchanged} unchanged, ${r.skipped.length} skipped${r.skipped.length ? ` (${Object.entries(reasons).map(([k, n]) => `${n} ${k}`).join('; ')})` : ''}`);
+    } catch (e) {
+      console.log(`${src}: failed (${e.message})`);
+    }
+  }
+  console.log(`\n${total} skill version(s) imported into @${scope}`);
 }
 
 async function org(args, f) {
@@ -353,6 +425,11 @@ async function init(_args, f) {
 }
 
 async function sync(_args, f) {
+  if (f.quiet) { const log = console.log; console.log = () => {}; try { return await syncInner(f); } finally { console.log = log; } }
+  return syncInner(f);
+}
+
+async function syncInner(f) {
   const m = readManifest();
   if (!m) throw new Error('no skills.json here (run skillyard init)');
   const cfg = loadConfig();
@@ -653,8 +730,14 @@ async function exportSite(f) {
   const webDir = path.join(REPO_ROOT, 'web');
   fs.rmSync(out, { recursive: true, force: true });
   fs.mkdirSync(path.join(out, 'api'), { recursive: true });
-  for (const file of fs.readdirSync(webDir)) fs.copyFileSync(path.join(webDir, file), path.join(out, file));
+  for (const file of fs.readdirSync(webDir)) if (fs.statSync(path.join(webDir, file)).isFile()) fs.copyFileSync(path.join(webDir, file), path.join(out, file));
   fs.writeFileSync(path.join(out, 'static.js'), 'window.SKILLYARD_STATIC = true;\n');
+  // The read-only Studio demo, if a snapshot has been exported.
+  const studioSrc = path.join(REPO_ROOT, 'studio');
+  if (fs.existsSync(path.join(studioSrc, 'demo-snapshot.json'))) {
+    fs.cpSync(studioSrc, path.join(out, 'studio'), { recursive: true });
+    fs.writeFileSync(path.join(out, 'studio', 'static.js'), 'window.STUDIO_STATIC = true;\n');
+  }
   fs.writeFileSync(path.join(out, '.nojekyll'), '');
   const all = store.search({ limit: 10000 }, ADMIN).map(({ score, ...s }) => s);
   const orgs = Object.values(store.db.orgs).map(({ slug, name, description, website }) => ({ slug, name, description, website }));
@@ -671,6 +754,46 @@ async function exportSite(f) {
     }
   }
   console.log(`wrote static site with ${all.length} skills to ${tilde(out)}`);
+}
+
+async function studio(args, f) {
+  if (f.demo) {
+    process.env.SKILLYARD_STUDIO_DEMO = '1';
+    const { seedDemo } = await import('./studio/demo.js');
+    const dir = seedDemo({ reset: !!f.reset });
+    console.log(`demo mode: a fictional team's data in ${tilde(dir)}; your own logs are not read`);
+  }
+  if (args[0] === 'export') {
+    // Snapshot the demo workspace for a read-only public page. Only the fictional team's data; no local paths.
+    process.env.SKILLYARD_STUDIO_DEMO = '1';
+    const engine = await import('./studio/engine.js');
+    const out = path.resolve(f.out || path.join(REPO_ROOT, 'studio', 'demo-snapshot.json'));
+    const state = engine.stats();
+    state.job = null;
+    const scrub = (p) => { const { draftDir, target, installed, ...rest } = p; return { ...rest, target: target ? { where: target.where, managed: target.managed } : null }; };
+    state.proposals = state.proposals.map(scrub);
+    const diffs = Object.fromEntries(state.proposals.filter((p) => p.before).map((p) => [p.id, engine.diffLines(p.before, p.after)]));
+    const skills = engine.installedSkills().map(({ dir, ...k }) => k);
+    const json = JSON.stringify({ state, skills, diffs, preview: engine.preview() });
+    // A public demo must never carry anything from the machine it was made on.
+    const leaks = [os.homedir(), '/var/folders/', '/private/var/', os.userInfo().username].filter((x) => x && json.includes(x));
+    if (leaks.length) throw new Error(`snapshot contains local details (${leaks.length}); not writing a public demo`);
+    fs.writeFileSync(out, json);
+    console.log(`wrote read-only Studio demo snapshot to ${tilde(out)}`);
+    return;
+  }
+  if (args[0] === 'review') {
+    const engine = await import('./studio/engine.js');
+    await engine.review({ maxProposals: Number(f.max) || 3, runs: Number(f.runs) || 2, fresh: !!f.fresh, onStep: (t) => console.log(t) });
+    const s = engine.stats();
+    console.log(`${s.pipeline.pending} proposal(s) waiting for review in Studio`);
+    return;
+  }
+  const { createStudioServer } = await import('./studio/server.js');
+  const port = Number(f.port || 7430);
+  const server = createStudioServer({ port });
+  await new Promise((r) => server.listen(port, '127.0.0.1', r));
+  console.log(`Skillyard Studio on http://127.0.0.1:${port}  (local only; nothing is read until you allow it)`);
 }
 
 // ---- helpers --------------------------------------------------------------

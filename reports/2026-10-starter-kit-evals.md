@@ -35,3 +35,5 @@
   the skill: 100% both ways on a later rerun with the harder fixture case. Generic privacy rules are table stakes for
   current models. The skill earns its place once the TODOs hold *your* specifics: the redaction file to update,
   the approved vendors, where production access goes. Fill them in, add an eval for each, and measure again.
+
+_Setup note (added Oct 30): these runs used the author's normal Claude Code setup, so personal instructions and memory were loaded in both conditions. `skillyard eval` now runs locked down (no shell, edit, web or MCP tools; reads confined to the test folder; `--bare` when an API key is set), so reruns may differ slightly._

@@ -1,0 +1,20 @@
+name: Skillyard skill check
+description: Format check and security scan for Agent Skills in a pull request, with a summary on the run page.
+branding:
+  icon: check-circle
+  color: green
+inputs:
+  paths:
+    description: Space-separated folders that hold skills
+    default: skills .claude/skills
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Check skills
+      shell: bash
+      env:
+        SKILL_PATHS: ${{ inputs.paths }}
+      run: node "$GITHUB_ACTION_PATH/bin/skillyard.js" ci $SKILL_PATHS

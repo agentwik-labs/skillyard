@@ -9,7 +9,9 @@
   "files": [
     "bin",
     "src",
-    "web"
+    "web",
+    "studio",
+    "starter-kit"
   ],
   "engines": {
     "node": ">=20"

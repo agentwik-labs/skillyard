@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node bin/skillyard.js seed --data .demo-data
+      - run: node bin/skillyard.js seed --data .demo-data --community
       - run: node bin/skillyard.js export site --data .demo-data --out _site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
