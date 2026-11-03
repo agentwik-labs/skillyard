@@ -237,7 +237,7 @@ async function viewShowcase() {
     <section class="lp-hero">
       <h1 class="lp-sentence"><span class="l1">Teach your agents</span> <span class="l2wrap"><span class="slot" data-ui aria-hidden="true">
           <span class="frame f1"><i>you</i>no, we use pnpm here</span>
-          <span class="frame f2"><i>SKILL.md</i>Always use pnpm --filter &lt;pkg&gt;</span>
+          <span class="frame f2"><i>SKILL.md</i>Use pnpm, never npm</span>
           <span class="frame f3"><i>tested</i><b>67% → 92%</b></span>
         </span> <span class="l2">how you work.</span></span></h1>
       <p class="lp-lede">Skillyard is a library of ${pub.length} open-source skills for Claude Code, Codex and Cursor, each scanned and tested, and <a href="studio/">Studio</a>, which turns the corrections you type into new skills and proves they help.</p>
