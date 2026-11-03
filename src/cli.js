@@ -765,6 +765,10 @@ async function exportSite(f) {
   fs.mkdirSync(path.join(out, 'api'), { recursive: true });
   for (const file of fs.readdirSync(webDir)) if (fs.statSync(path.join(webDir, file)).isFile()) fs.copyFileSync(path.join(webDir, file), path.join(out, file));
   fs.writeFileSync(path.join(out, 'static.js'), 'window.SKILLYARD_STATIC = true;\n');
+  // Stamp asset URLs with the build so browsers fetch the new CSS and JS after every deploy.
+  const v = Date.now().toString(36);
+  const idx = path.join(out, 'index.html');
+  fs.writeFileSync(idx, fs.readFileSync(idx, 'utf8').replace(/(href|src)="((?:style|landing)\.css|(?:app|static)\.js)"/g, `$1="$2?v=${v}"`));
   // The read-only Studio demo, if a snapshot has been exported.
   const studioSrc = path.join(REPO_ROOT, 'studio');
   if (fs.existsSync(path.join(studioSrc, 'demo-snapshot.json'))) {
